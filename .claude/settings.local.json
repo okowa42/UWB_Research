@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find / -maxdepth 6 -iname \"*akarivault*\")",
+      "Bash(find / -maxdepth 6 -iname \"hot.md\")"
+    ]
+  }
+}

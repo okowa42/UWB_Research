@@ -1,0 +1,29 @@
+{
+  "stations": [
+    {
+      "name": "Anchor A",
+      "type": "ANCHOR",
+      "position": [0.0, 0.0, 0.0]
+    },
+    {
+      "name": "Anchor B",
+      "type": "ANCHOR",
+      "position": [10.0, 0.0, 0.0]
+    },
+    {
+      "name": "Anchor C",
+      "type": "ANCHOR",
+      "position": [5.0, 8.66, 0.0]
+    },
+    {
+      "name": "Anchor D",
+      "type": "ANCHOR",
+      "position": [5.0, 2.89, 6.0]
+    },
+    {
+      "name": "ROVER_TAG",
+      "type": "TAG",
+      "position": [5.0, 4.0, 1.0]
+    }
+  ]
+}

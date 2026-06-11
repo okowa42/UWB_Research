@@ -1,0 +1,3 @@
+[submodule "gdop"]
+	path = gdop
+	url = https://github.com/schwarzfelix/gdop.git

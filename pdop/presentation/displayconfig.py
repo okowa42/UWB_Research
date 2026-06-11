@@ -1,0 +1,14 @@
+class DisplayConfig():
+    def __init__(self):
+
+        self.showAnchorSpheres = True
+        self.showAnchorLabels = True
+
+        self.showTagAnchorLabels = False
+        self.showTagAnchorLines = True
+
+        self.showBetweenAnchorsLabels = False
+        self.showBetweenAnchorsLines = False
+
+        self.showTagLabels = True
+        self.showGDOP = True
