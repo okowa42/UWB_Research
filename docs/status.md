@@ -5,33 +5,42 @@
 - Cowork(Windows側AI)が読むファイル。実装を知らない読者にも状態が伝わる書き方をする
 -->
 ---
-last_updated: 2026-07-09
-phase: セットアップ完了
+last_updated: 2026-07-13
+phase: 案B 実装計画立案（灯レビュー待ち）
 ---
 # 実装状態(Cowork連携用)
 
 ## 現在の状態
-- Cowork連携セットアップ完了。リポジトリは WSL ext4 内 (`~/UWB_Research`)、GitHub認証はSSHで疎通。
-- CLAUDE.md をインデックス化し、詳細ルールを `rules/` 配下5ファイルに分割:
-  architecture-gdop / architecture-pdop / research-context / akarivault-workflow / cowork-sync。
-- `docs/status.md`（本ファイル）を新設。Cowork へのミラー先は
-  研究フォルダ `Claude用参考資料/ClaudeCode_status_mirror.md`。
-- 実装本体の現在地: STEP1 の3Dコアエンジン（≥4非平面アンカー・N次元trilateration・
-  PDOP/HDOP/VDOP）は `pdop/` に実装済み・動作確認済み（スモークテストで PDOP=1.552 等を確認）。
+- 案B（月面UWB自己校正）の**実装計画を策定完了**。まだコードは書いていない（承認待ち）。
+- 計画書: リポジトリ `docs/implementation-plan-selfcal.md`（本ファイルは要約。詳細はそちら）。
+- 仕様書 v1.0・NotebookLM①〜④・既存資産（pdop/, ~/UWB_Sim/3d）を精読して立案。
+- 主要な設計判断（灯の承認が必要）:
+  1. **配置場所**: pdop の中ではなく UWB_Research 直下に新規ヘッドレスpkg `selfcal/` を新設。
+     pdop は GUI アプリのため。`pdop.simulation.geometry`(trilateration/PDOP)のみ再利用（V-7自明成立）。
+  2. **STEP1バッチ移植は案Bに統合**（別タスク化しない）。案B Phase B が STEP1基盤を内包し二重実装回避。
+     → 依頼ヘッダの優先度質問への回答＝**案Bを先行**。
+  3. 推定器はI/F分離設計（第一実装=LM最小二乗、T-008でPF後付け可能）。
+  4. 実装は Phase A→B→C。V-1〜V-7 を pytest 自動化(E0)。
 
 ## 次にやること
-- [ ] STEP1完成に向けたバッチ評価パイプラインの `pdop/` への移植
-      (3Dアンカーパターン生成・モンテカルロ3D RMSE・計算時間ベンチ・CSV/プロット集計)。
-      設計参照元は姉妹プロジェクト `~/UWB_Sim`(2D)。
-- [ ] (任意) フェーズ5: セッション終了時ミラーコピーの hooks(SessionEnd) による自動化。
+- [ ] 灯の承認 → 承認後 Phase A（selfcal骨組み・A〜E単体・LM推定器・E0/E1）着手。
+- [ ] 下記「連絡事項」の要確認点への回答を受けてから、疑問点を計画へ反映。
+- [ ] （独立保守）OneDrive移設に伴うミラーパス更新を CLAUDE.md/rules に反映。
 
 ## Coworkへの連絡事項
-- CLAUDE.md を「本体=行動トリガーのみ+rules/へのインデックス」構成に変更した。
-  セッション routine は AkariVault `hot.md`(横断メモ) と `docs/status.md`(本リポジトリ実装状態)の
-  2系統併存とした。研究.md 側の運用に取り込む際はこの前提で。
-- 上記以外に設計判断が必要な点は現時点でなし。
+**A. 承認してほしい設計判断**: 上記「現在の状態」1〜4（特に selfcal 新設・STEP1統合・案B先行）。
+
+**B. 仕様への要確認（[重]=設計を左右。詳細は計画書§9）**:
+- [重] σ_v=50mm は鉛直誤差の過小評価の疑い（レゴリス沈み込み σ_env は鉛直に効く／調査③）。値の妥当性は？
+- [重] G1 の剛性ランク条件が未定義。`rank(R_free)=3·N_free`（既知点ピン留めで−6不要）と解釈して良いか。
+- [重] G2 のゲージ不定性の数値処理が未指定。scipy `trf`＋擬似逆/ゲージ拘束で対処する方針で良いか。
+- [軽] E1 の N_a=8 が推奨下限9（調査③④）未満。意図的か。σ_r公称100mmの根拠も明記希望。
+- [軽] R_max=200m はパスロス遷移(≈180m)超。距離依存の測距劣化は範囲外で良いか。
+
+**C. 運用**: ミラー先が `OneDrive` → `OneDrive - Chiba Institute of Technology` に変更されていた。
+今回のミラーは新パスへ実施済み。恒久対応（CLAUDE.md等のパス更新）は次セッションで提案予定。
 
 ## セッションログ
-### 2026-07-09
-- Cowork連携計画書に沿ってフェーズ1〜4を実施(環境確認→配置確認→CLAUDE.md統合→終了ルーチン)。
-- CLAUDE.md をインデックス化+rules/分割、docs/status.md 新設、ミラー運用を確立。
+### 2026-07-13
+- 案B実装依頼を受領。仕様書・NotebookLM①〜④・既存資産を精読し実装計画書を作成（docs/implementation-plan-selfcal.md）。
+- Cowork連携セットアップ(フェーズ1〜4)完了・push済み。CLAUDE.mdをインデックス化しrules/分割。
