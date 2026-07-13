@@ -2,7 +2,51 @@
   "permissions": {
     "allow": [
       "Bash(find / -maxdepth 6 -iname \"*akarivault*\")",
-      "Bash(find / -maxdepth 6 -iname \"hot.md\")"
+      "Bash(find / -maxdepth 6 -iname \"hot.md\")",
+      "Bash(git add *)",
+      "Bash(git restore *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git remote *)",
+      "Read(//mnt/c/Users/ahiro/OneDrive/デスクトップ/Claude/大学/**)",
+      "Bash(mount)",
+      "Read(//mnt/**)",
+      "Bash(ls \"/mnt/c/Users/ahiro/OneDrive/デスクトップ/\" 2>&1 | head; echo \"--- Claude ---\"; ls \"/mnt/c/Users/ahiro/OneDrive/デスクトップ/Claude/\" 2>&1 | head; echo \"--- 大学 ---\"; ls \"/mnt/c/Users/ahiro/OneDrive/デスクトップ/Claude/大学/\" 2>&1 | head)",
+      "Read(//mnt/c/Users/ahiro/OneDrive/**)",
+      "Read(//mnt/c/Users/ahiro/OneDrive/デスクトップ/**)",
+      "Read(//mnt/c/Users/ahiro/OneDrive/デスクトップ/Claude/**)",
+      "Bash(ls \"/mnt/c/Users/ahiro/OneDrive/\" 2>&1 | head -30)",
+      "Bash(echo \"=== ~/UWB_Sim 有無・構造 ===\"; ls -la ~/UWB_Sim 2>&1 | head -30; echo \"--- UWB_Sim 主要ディレクトリ ---\"; find ~/UWB_Sim -maxdepth 2 -type d 2>/dev/null | grep -vE \"\\\\.git|env|__pycache__\" | head -40)",
+      "Read(//home/akarihirohara/UWB_Sim/**)",
+      "Read(//home/akarihirohara/UWB_Sim/3d/src/**)",
+      "Read(//home/akarihirohara/UWB_Sim/3d/scripts/**)",
+      "Read(//home/akarihirohara/UWB_Sim/3d/configs/**)",
+      "Read(//home/akarihirohara/UWB_Sim/3d/tests/**)",
+      "Bash(MIRROR=\"/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md\"; cp docs/status.md \"$MIRROR\" && cmp docs/status.md \"$MIRROR\" && echo \"✅ cmp: 一致（新パスへミラー成功）\" || echo \"❌ 不一致/失敗\")",
+      "Bash(MIRROR=\"/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md\"; cp docs/status.md \"$MIRROR\" && cmp docs/status.md \"$MIRROR\" && echo \"✅ mirror cmp 一致\" || echo \"❌ 失敗\")",
+      "Bash(find / -maxdepth 6 -iname \"*akarivault*\" -type d)",
+      "Read(//mnt/vault/_Dev/context/**)",
+      "Read(//mnt/vault/**)",
+      "Bash(find /mnt/c -iname \"*.md\" -path \"*Claude用参考資料*\" 2>/dev/null | head -40; echo \"---v1.1 search---\"; find /mnt/c /home -iname \"*仕様*\" -o -iname \"*spec*1*1*\" 2>/dev/null | grep -iv node_modules | head -30)",
+      "Read(//mnt/c/**)",
+      "Bash(ls -la \"/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/\" 2>/dev/null)",
+      "Read(//mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/**)",
+      "Bash(kill %bmjfwl2bt)",
+      "Bash(find /mnt/c/Users/ahiro -maxdepth 3 -iname \"*AkariVault*\" 2>/dev/null | head; find /mnt -maxdepth 2 -iname \"*Vault*\" 2>/dev/null | head; ls /mnt/ 2>/dev/null)",
+      "Read(//mnt/c/Users/ahiro/**)",
+      "Bash(ls -la /mnt/vault 2>/dev/null | head; echo \"---\"; find /mnt/vault -maxdepth 3 -name \"hot.md\" -o -maxdepth 3 -type d -name \"_Dev\" 2>/dev/null | head)",
+      "Bash(cd /mnt/vault && echo \"=== hot.md ===\" && cat _Dev/context/hot.md; echo; echo \"=== tasks.md \\(head\\) ===\" && head -40 _Dev/tasks.md 2>/dev/null; echo; echo \"=== improvements.md \\(head\\) ===\" && head -20 _Dev/improvements.md 2>/dev/null; echo; echo \"=== projects dir ===\" && ls _Dev/context/projects/ 2>/dev/null; echo \"=== 01_Projects ===\" && ls 01_Projects/ 2>/dev/null)",
+      "Bash(MIR=\"/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md\"; cp docs/status.md \"$MIR\" && cmp docs/status.md \"$MIR\" && echo \"MIRROR OK \\(cmp一致\\)\")",
+      "Bash(printf '%s\\\\n' '| 2026-07-13 | セッション終了処理でAkariVaultの実体パス（`/mnt/vault`）が rules/akarivault-workflow.md にも hot.md にも記載されず、find で探す必要があった（/mnt/c ではないので書込可という判断も都度必要） | akarivault-workflow.md の冒頭に「Vault実体パス=/mnt/vault（OneDrive-FUSE同期。/mnt/c 禁止対象外だが縮小編集のNUL破損リスクは同じ）」を明記 | open |')",
+      "Bash(python3 -c \"d=open\\('_Dev/improvements.md','rb'\\).read\\(\\); print\\('NUL bytes:', d.count\\(b'\\\\x00'\\)\\); print\\('lines:', d.count\\(b'\\\\n'\\)\\)\")",
+      "Bash(python3 -c \"d=open\\('_Dev/tasks.md','rb'\\).read\\(\\); print\\('tasks.md NUL:', d.count\\(b'\\\\x00'\\)\\)\")",
+      "Bash(cd /mnt/vault && echo \"=== projects/研究.md ===\" && cat \"_Dev/context/projects/研究.md\"; echo \"=== 01_Projects/研究 ===\" && ls -la 01_Projects/研究/)",
+      "Bash(python3 -c \"d=open\\('_Dev/context/projects/研究.md','rb'\\).read\\(\\); print\\('研究.md NUL:', d.count\\(b'\\\\x00'\\)\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(git commit -q -m ' *)"
+    ],
+    "additionalDirectories": [
+      "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料"
     ]
   }
 }

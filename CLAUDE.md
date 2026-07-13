@@ -28,9 +28,13 @@
 
 ## セッション終了ルール（「今日はここまで」等の合図で実行）
 1. `docs/status.md` を更新 → ミラーコピー＋`cmp`検証。手順: `rules/cowork-sync.md`
-2. AkariVault `hot.md` を更新。手順: `rules/akarivault-workflow.md`
-3. `git add -A && git commit`（日本語で「何をなぜ」1行）。push はユーザー確認後。
-
+2. 自己ふりかえり: 今回の修正指示・繰り返された指示・違和感FBを `_Dev/improvements.md` に起票
+3. `_Dev/tasks.md` を更新（完了・差し戻し・新規起票）
+4. `hot.md` 更新（300字以内厳守。溢れた分は `_Dev/context/archive/YYYY-MM-DD.md` へ）
+5. active_project の作業ログcanvas（`01_Projects/<プロジェクト>/`）を更新
+6. プロジェクト詳細 → `_Dev/context/projects/` に記録
+7. `04_Context` 追記候補があれば差分案を提示し、**ユーザー承認を得てから**書き込む（承認なしの書き込みは経路を問わず禁止）
+8. `git add -A && git commit`（日本語で「何をなぜ」1行）。push はユーザー確認後。
 ---
 
 ## rules/ インデックス（必要時に読む詳細）
