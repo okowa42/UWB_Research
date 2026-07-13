@@ -13,10 +13,14 @@
 
 ## 重要パス（WSL側表記）
 ```
-研究フォルダ:   /mnt/c/Users/ahiro/OneDrive/デスクトップ/Claude/大学/研究/
+研究フォルダ:   /mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/
 設計指示置き場: 上記 + Claude用参考資料/
 ミラー先:       上記 + Claude用参考資料/ClaudeCode_status_mirror.md
 ```
+> 注意: OneDrive フォルダ名は組織テナント由来（`OneDrive - Chiba Institute of Technology`）。
+> 個人用↔大学テナントの切替やテナント名変更で変わり得る。ミラー前に `ls` で実在を確認し、
+> 見つからなければ `/mnt/c/Users/ahiro/` 直下の `OneDrive*` を探して読み替えること
+> （2026-07-13 に `OneDrive/デスクトップ` → `OneDrive - Chiba Institute of Technology/デスクトップ` の移設実績あり）。
 
 ## セッション開始時（詳細）
 - `docs/status.md` を読む（前回の状態・次のToDo）。
@@ -26,8 +30,8 @@
 1. `docs/status.md` を更新（書式は下記「status.md 書式」）。
 2. ミラーコピーと検証:
    ```bash
-   cp docs/status.md "/mnt/c/Users/ahiro/OneDrive/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
-   cmp docs/status.md "/mnt/c/Users/ahiro/OneDrive/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
+   cp docs/status.md "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
+   cmp docs/status.md "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
    ```
    `cmp` で一致を必ず確認（OneDrive 破損対策の検証習慣）。
 3. `git add -A && git commit`（メッセージ: 日本語で「何をなぜ」1行）。
