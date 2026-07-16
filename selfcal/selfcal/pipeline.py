@@ -68,6 +68,7 @@ def run_single_trial(
     row["sigma_r_mm"] = cfg["ranging"]["sigma_r_mm"]
     row["sigma_deploy_mm"] = cfg["deployment"]["sigma_deploy_mm"]
     row["sigma_v_mm"] = cfg["deployment"]["sigma_v_mm"]
+    row["r_max_mm"] = cfg["ranging"]["r_max_mm"]
     row["gauge"] = cfg["calibration"]["gauge"]
     row["dof"] = cfg["calibration"]["dof"]
     return row

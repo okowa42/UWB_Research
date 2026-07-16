@@ -1,12 +1,13 @@
-"""受け入れ基準 V-1〜V-8(Phase A 対象: V-1,2,3,6,7,8)の自動化 = E0。
+"""受け入れ基準 V-1〜V-8 の自動化 = E0。
 
-V-4/V-5 は統計的単調性/整列不変式で Phase B の担当。ここでは Phase A 完了判定に
-必要な決定的テストのみを緑化する。乱数はすべて rng.trial_generator 経由(V-6)。
+Phase A: V-1,2,3,6,7,8(決定的テスト)。Phase B: V-4(統計的単調性)・V-5(整列不変式)。
+乱数はすべて rng.trial_generator 経由(V-6)。
 """
 from __future__ import annotations
 
 import importlib.util
 import pathlib
+import statistics
 
 import numpy as np
 
@@ -146,3 +147,35 @@ def test_v8_coplanar_2d_recovers_truth():
     ).max()
     assert xy_err < 1e-3                 # 2D(z既知)なら σ_r=0 で真値復元
     assert res.rigidity_ok
+
+
+# --- V-4: σ_r 増加で RMSE(N_mc=100 中央値)が単調増加 ---
+def test_v4_rmse_monotonic_in_sigma_r():
+    # 中央値の統計的単調性。タグ測位は本テストに無関係なので無効化して高速化。
+    sigma_r_values = [30.0, 110.0, 190.0, 280.0]
+    medians = []
+    for sr in sigma_r_values:
+        cfg = load_config(overrides={
+            "montecarlo": {"n_mc": 100},
+            "tag_positioning": {"enabled": False},
+            "ranging": {"sigma_r_mm": sr},
+        })
+        rows = run_condition(cfg, condition_id=0)
+        medians.append(statistics.median(r["rmse_anchor_shape_mm"] for r in rows))
+    # σ_r=30→280 の広い範囲で隣接条件が明瞭に増加することを要求。
+    assert all(medians[i] < medians[i + 1] for i in range(len(medians) - 1)), medians
+
+
+# --- V-5: G2 Procrustes 整列後 RMSE_shape ≤ 整列前絶対 RMSE(全試行) ---
+def test_v5_procrustes_shape_le_absolute():
+    # G2(規約固定)は規約点の誤差で絶対座標系が大きく歪むが、形状誤差は Procrustes
+    # 整列で吸収される。整列後 shape ≤ 整列前 abs が全試行で成立することを保証。
+    cfg = load_config(overrides={
+        "montecarlo": {"n_mc": 50},
+        "tag_positioning": {"enabled": False},
+        "calibration": {"gauge": "convention"},
+    })
+    rows = run_condition(cfg, condition_id=0)
+    assert rows
+    for r in rows:
+        assert r["rmse_anchor_shape_mm"] <= r["rmse_anchor_abs_mm"] + 1e-9
