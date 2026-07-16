@@ -50,6 +50,15 @@ def e1_base(base_cfg: Mapping[str, Any]) -> list[tuple[dict, int]]:
     return [(dict(base_cfg), 0)]
 
 
+def e3_2d_calibration(base_cfg: Mapping[str, Any]) -> list[tuple[dict, int]]:
+    """E3: 2D校正モード(dof=2, Nüchter流のz固定平面校正)の骨組み(§6, Phase C)。
+
+    全アンカーの z を意図値に固定し x,y のみ推定する。近共面配置では 3D 校正が鉛直に
+    破綻する一方、2D 校正は水平形状を安定に復元する(V-8 の主張)。第一版は公称1条件。
+    """
+    return [(deep_merge(base_cfg, {"calibration": {"dof": 2}}), 0)]
+
+
 def ofat(
     base_cfg: Mapping[str, Any],
     section: str,
@@ -145,6 +154,7 @@ def e2_grid_rigidity(base_cfg):
 # 実験レジストリ。
 EXPERIMENTS: dict[str, Callable[[Mapping[str, Any]], list[tuple[dict, int]]]] = {
     "E1": e1_base,
+    "E3": e3_2d_calibration,
     "E2_sigma_r": e2_sigma_r,
     "E2_sigma_v": e2_sigma_v,
     "E2_sigma_deploy": e2_sigma_deploy,

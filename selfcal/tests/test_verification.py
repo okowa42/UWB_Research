@@ -19,6 +19,7 @@ from selfcal.io.exporters import write_long_csv
 from selfcal.montecarlo import run_condition
 from selfcal.rigidity import check_rigidity
 from selfcal.rng import trial_generator
+from selfcal.uniqueness import multistart_uniqueness
 
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -179,3 +180,52 @@ def test_v5_procrustes_shape_le_absolute():
     assert rows
     for r in rows:
         assert r["rmse_anchor_shape_mm"] <= r["rmse_anchor_abs_mm"] + 1e-9
+
+
+# --- V-9: 多スタート大域一意性検査(Phase C) ---
+# 剛性ランクは局所一意性(連続変形)の必要条件だが、鏡映等の離散不定性(大域一意性)は
+# 捕捉できない(§4.4 注意1)。多スタート検査がこれを検出することを保証する。
+def test_v9a_tripod_flip_detected_despite_full_rank():
+    # 三脚: 頂点(index3, 自由)を非共線な既知3点(base)に距離拘束。頂点は base 平面を
+    # 通して反転でき距離を保つ = 離散不定性。しかし枠組は無限小剛(rank 充足)。
+    base = np.array([[0.0, 0.0, 0.0], [4000.0, 0.0, 0.0], [0.0, 4000.0, 0.0]])
+    apex = np.array([1000.0, 1000.0, 3000.0])
+    xyz = np.vstack([base, apex])
+    n = 4
+    full = np.full((n, n), np.nan)
+    for i in range(n):
+        for j in range(i + 1, n):
+            full[i, j] = full[j, i] = np.linalg.norm(xyz[i] - xyz[j])
+
+    # 剛性ランクは充足("剛"と判定される)
+    rig = check_rigidity(xyz, full, "known", known_idx=[0, 1, 2], dim=3)
+    assert rig.rigidity_ok and rig.rank == rig.required_rank
+
+    # だが多スタート検査は 2 個の相異なる完全適合解(頂点の反転)を検出する
+    rng = trial_generator(7, 0, 0)
+    res = multistart_uniqueness(
+        full, xyz, [0, 1, 2], "known", 3, rng,
+        n_starts=16, perturb_mm=1500.0, resid_tol_mm=1e-3,
+    )
+    assert not res.uniqueness_ok
+    assert res.n_distinct == 2
+    assert res.best_residual_mm < 1e-3           # 両解ともデータに完全適合
+    assert res.max_cluster_shape_dist_mm > 100.0  # 反転は明確に分離
+
+
+def test_v9b_noncoplanar_known_is_unique():
+    # 既知アンカーが非共面(E1: 1台のみ z=2900)なら鏡映は既知点で破れ、単一解に収束する。
+    cfg = load_config(overrides={
+        "known": {"known_z_mm": [1500.0, 1500.0, 1500.0, 2900.0]},
+        "deployment": {"sigma_v_mm": 300.0},
+        "ranging": {"sigma_r_mm": 0.0},
+    })
+    rng = trial_generator(11, 0, 0)
+    dep = deployment.build_deployment(cfg, rng)
+    dist = ranging.measure_ranges(dep.true_xyz_mm, cfg, rng)
+    res = multistart_uniqueness(
+        dist, dep.intended_xyz_mm, cfg["known"]["known_idx"], "known", 3, rng,
+        n_starts=16, perturb_mm=800.0, resid_tol_mm=1e-2,
+    )
+    assert res.uniqueness_ok
+    assert res.n_distinct == 1
