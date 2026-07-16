@@ -101,7 +101,9 @@
       "Bash(ps -o pid,etimes -C python)",
       "Bash(.venv/bin/python scripts/make_figures.py --csv results/e2_grid.csv --out results/e2_grid.png --metric coverage)",
       "Bash(git commit *)",
-      "Bash(.venv/bin/python scripts/run_experiment.py --exp E3 --out results/e3_2d.csv --n-mc 100)"
+      "Bash(.venv/bin/python scripts/run_experiment.py --exp E3 --out results/e3_2d.csv --n-mc 100)",
+      "Bash(python3 -c \"d=open\\('/mnt/vault/_Dev/context/hot.md','rb'\\).read\\(\\); print\\('size',len\\(d\\),'NUL',d.count\\(b'\\\\x00'\\)\\)\")",
+      "Bash(git commit -q -m 'セッション終了: settings に push 許可を追加 *)"
     ],
     "additionalDirectories": [
       "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料"
