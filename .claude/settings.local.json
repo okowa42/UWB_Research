@@ -72,7 +72,15 @@
       "Bash(git -C /home/akarihirohara/UWB_Research log --oneline -4)",
       "Bash(cp /home/akarihirohara/UWB_Research/docs/status.md '/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md')",
       "Bash(git -C /home/akarihirohara/UWB_Research add docs/status.md)",
-      "Bash(git -C /home/akarihirohara/UWB_Research log --oneline -5)"
+      "Bash(git -C /home/akarihirohara/UWB_Research log --oneline -5)",
+      "Bash(git -C /home/akarihirohara/UWB_Research add selfcal/selfcal/experiments.py selfcal/selfcal/pipeline.py selfcal/scripts/make_figures.py selfcal/scripts/run_experiment.py selfcal/README.md .claude/settings.local.json)",
+      "Bash(git -C /home/akarihirohara/UWB_Research log --oneline -3)",
+      "Bash(git -C /home/akarihirohara/UWB_Research log --oneline -6)",
+      "Read(//mnt/vault/_Dev/**)",
+      "Read(//mnt/vault/01_Projects/研究/**)",
+      "Read(//mnt/vault/_Dev/context/projects/**)",
+      "Bash(python3)",
+      "Bash(git -C /home/akarihirohara/UWB_Research add -A)"
     ],
     "additionalDirectories": [
       "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料"
