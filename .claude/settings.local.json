@@ -80,7 +80,27 @@
       "Read(//mnt/vault/01_Projects/研究/**)",
       "Read(//mnt/vault/_Dev/context/projects/**)",
       "Bash(python3)",
-      "Bash(git -C /home/akarihirohara/UWB_Research add -A)"
+      "Bash(git -C /home/akarihirohara/UWB_Research add -A)",
+      "Bash(git -C /home/akarihirohara/UWB_Research log --oneline origin/main..HEAD)",
+      "Bash(git -C /home/akarihirohara/UWB_Research push origin main)",
+      "Bash(.venv/bin/python scripts/run_experiment.py --exp E1 --out results/e1_base.csv)",
+      "Bash(.venv/bin/python -)",
+      "Bash(.venv/bin/python scripts/run_experiment.py --exp E2_grid_rigidity --out results/e2_grid_rigidity.csv)",
+      "Bash(.venv/bin/python scripts/run_experiment.py --exp E2_n_anchors --out results/e2_n_anchors.csv)",
+      "Bash(.venv/bin/python scripts/run_experiment.py --exp E2_height_diversity --out results/e2_height.csv)",
+      "Bash(.venv/bin/python scripts/run_experiment.py --exp E2_grid --out results/e2_grid.csv --n-mc 40)",
+      "Bash(ps -o pid,etimes,time,%cpu,cmd -C python)",
+      "Bash(awk '{print $2, $10, $11, $12, $13, $14, $15}')",
+      "Bash(ps -o pid,etimes,%cpu,cmd -C python)",
+      "Bash(kill 58708)",
+      "Bash(ps -o pid,etimes,cmd -C python)",
+      "Bash(kill -0 58160)",
+      "Bash(.venv/bin/python scripts/make_figures.py --csv results/e2_grid_rigidity.csv --out results/e2_grid_rigidity.png)",
+      "Bash(.venv/bin/python scripts/make_figures.py --csv results/e2_height.csv --out results/e2_height_v.png --metric rmse_anchor_shape_v_mm)",
+      "Bash(.venv/bin/python scripts/make_figures.py --csv results/e2_n_anchors.csv --out results/e2_n_anchors_v.png --metric rmse_anchor_shape_v_mm)",
+      "Bash(ps -o pid,etimes -C python)",
+      "Bash(.venv/bin/python scripts/make_figures.py --csv results/e2_grid.csv --out results/e2_grid.png --metric coverage)",
+      "Bash(git commit *)"
     ],
     "additionalDirectories": [
       "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料"

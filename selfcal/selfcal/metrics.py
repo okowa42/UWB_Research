@@ -94,13 +94,17 @@ def trial_metrics(
             out["rmse_tag_mm"] = t_full
             out["rmse_tag_h_mm"] = t_h
             out["rmse_tag_v_mm"] = t_v
-            # ΔRMSE_tag: 推定アンカー版 − 真アンカー版(同一ノイズ)
-            tt_full, _, _ = rmse_components(t, g)
+            # ΔRMSE_tag: 推定アンカー版 − 真アンカー版(同一ノイズ)。
+            # H/V 分解でアンカー鉛直誤差のタグ側伝搬(追補②の焦点)を定量化する。
+            tt_full, tt_h, tt_v = rmse_components(t, g)
             out["rmse_tag_trueanchor_mm"] = tt_full
             out["delta_rmse_tag_mm"] = t_full - tt_full
-            # カバレッジ率 C(ε_thr)
+            out["delta_rmse_tag_h_mm"] = t_h - tt_h
+            out["delta_rmse_tag_v_mm"] = t_v - tt_v
+            # カバレッジ率 C(ε_thr) と、より厳しい C(100mm)(追補②: 誤差伝搬の報告用)
             err = np.linalg.norm(e - g, axis=1)
             out["coverage"] = float(np.mean(err <= eps))
+            out["coverage_100mm"] = float(np.mean(err <= 100.0))
             # PDOP true/est(中央値)と過信度
             p_true, h_true, v_true = _median_pdop(true_xyz_mm, grid, positionable, r_max)
             p_est, h_est, v_est = _median_pdop(est_xyz_mm, grid, positionable, r_max)
@@ -113,7 +117,8 @@ def trial_metrics(
             out["pdop_overconfidence"] = float(t_full / pred) if pred > 0 else float("nan")
         else:
             for key in ["rmse_tag_mm", "rmse_tag_h_mm", "rmse_tag_v_mm",
-                        "rmse_tag_trueanchor_mm", "delta_rmse_tag_mm", "coverage",
+                        "rmse_tag_trueanchor_mm", "delta_rmse_tag_mm",
+                        "coverage", "coverage_100mm",
                         "pdop_true", "pdop_est", "vdop_true", "vdop_est",
                         "pdop_overconfidence"]:
                 out[key] = float("nan")

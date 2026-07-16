@@ -18,15 +18,18 @@ cd selfcal
 .venv/bin/python -m pytest tests/ -q
 # E1 ベースケース(CSV 出力)
 .venv/bin/python scripts/run_experiment.py --exp E1 --out results/e1_base.csv
-# E2 感度スイープ(EXPERIMENTS: E2_sigma_r/_v/_deploy/_n_anchors/_r_max/_height_diversity/_grid)
+# E2 感度スイープ(EXPERIMENTS: E2_sigma_r/_v/_deploy/_n_anchors/_r_max/_height_diversity/_grid/_grid_rigidity)
 .venv/bin/python scripts/run_experiment.py --exp E2_sigma_r --out results/e2_sigma_r.csv
-.venv/bin/python scripts/run_experiment.py --exp E2_grid    --out results/e2_grid.csv
-# 高さ多様性スイープ(鉛直自己校正の成立条件を定量化)
+# 破綻領域マップ2種(追補①): 精度破綻(σ_deploy×σ_r, タグ測位ON) と 剛性破綻(N_a×R_max, タグ測位OFF)
+.venv/bin/python scripts/run_experiment.py --exp E2_grid          --out results/e2_grid.csv --n-mc 40
+.venv/bin/python scripts/run_experiment.py --exp E2_grid_rigidity --out results/e2_grid_rigidity.csv
+# 高さ多様性スイープ(鉛直自己校正の成立条件を定量化。1500-5000を500刻み+{10000,40000}参考点)
 .venv/bin/python scripts/run_experiment.py --exp E2_height_diversity --out results/e2_height.csv
-# 図(スイープ軸を自動判定: 1軸→感度曲線 / 2軸→破綻領域ヒートマップ)
-.venv/bin/python scripts/make_figures.py --csv results/e2_sigma_r.csv --out results/e2_sigma_r.png
-.venv/bin/python scripts/make_figures.py --csv results/e2_grid.csv    --out results/e2_grid.png
-.venv/bin/python scripts/make_figures.py --csv results/e2_height.csv  --out results/e2_height_v.png --metric rmse_anchor_shape_v_mm
+# 図(スイープ軸を自動判定: 1軸→感度曲線 / 2軸→破綻領域ヒートマップ。破綻は×剛性/△精度で色分け)
+.venv/bin/python scripts/make_figures.py --csv results/e2_sigma_r.csv        --out results/e2_sigma_r.png
+.venv/bin/python scripts/make_figures.py --csv results/e2_grid.csv           --out results/e2_grid.png --metric coverage
+.venv/bin/python scripts/make_figures.py --csv results/e2_grid_rigidity.csv  --out results/e2_grid_rigidity.png
+.venv/bin/python scripts/make_figures.py --csv results/e2_height.csv         --out results/e2_height_v.png --metric rmse_anchor_shape_v_mm
 ```
 
 ## パイプライン(A→E, §5)
@@ -38,15 +41,25 @@ cd selfcal
 | D | `tag_positioning.py` | 推定/真アンカーでタグ測位(同一ノイズ, ΔRMSE 分離) |
 | E | `metrics.py`, `alignment.py` | RMSE(H/V分解), Procrustes整列, PDOP過信度, カバレッジ |
 
-## 現状(Phase B 完了)
+## 現状(Phase B + 追補 完了)
 - **E0 全緑**: V-1〜V-8(V-4 単調性・V-5 Procrustes 不変式を追加, `pytest` 9 passed)。
-- **E2 感度スイープ実装済**: OFAT(σ_r/σ_v/σ_deploy/N_a/R_max/high_diversity)＋2軸グリッド(σ_deploy×σ_r)。
-  `make_figures.py` が感度曲線・破綻領域ヒートマップを自動判定して描画。profiler は
-  `run_experiment.py` が試行あたり計算時間(median/max/total)を出力＋`compute_time_s` 列。
+- **E2 感度スイープ実装済**: OFAT(σ_r/σ_v/σ_deploy/N_a/R_max/high_diversity)＋破綻領域マップ2種
+  (精度破綻=σ_deploy×σ_r タグ測位ON / 剛性破綻=N_a×R_max タグ測位OFF)。`make_figures.py` が
+  感度曲線・破綻マップを自動判定し、剛性破綻(×赤)/精度破綻(△橙 C(200mm)<95%)を凡例付きで色分け。
 - **所見1(裏取り済)**: E1 公称配置(8台中7台が z=1500 平面, 既知1台のみ z=2900)は鉛直の
   自己校正が極めて弱い。N_mc=100 中央値で **shape RMSE 水平=55mm / 鉛直=1128mm**(abs は
   水平97/鉛直2001)。σ_r=0 で完全復元＝実装バグでなく near-coplanar 幾何の必然。
-- **所見2(研究主張の定量化)**: 既知1台の仰角を 1500→40000mm へ上げると鉛直 shape RMSE が
-  **1161→147mm(約8倍改善)**、水平は≈53mmで不変。剛性ランクは全域で充足したまま鉛直精度
-  だけが単調改善 → 「高さ多様性=3D自己校正の成立条件」を定量的に支持(V-8 の主張の連続版)。
-- Phase C: E3(Nüchter, 2D校正)・多スタート一意性検査。
+- **所見2改(追補③で修正)**: 既知1台の仰角スイープを実現可能域で細分化した結果、
+  **1500→5000mm では鉛直 shape RMSE は 1168→1061mm(≈9%減)にとどまる**。大幅改善(10000mm
+  で564mm, 40000mm で134mm)は実現性の弱いタワー級高さでのみ生じる。⇒「単一アンカーを上げる」
+  だけでは実用域で不足。旧「40mで8倍改善」は理論上限であり主張を要修正。
+- **所見3(追補②誤差伝搬)**: E1 でタグ側 RMSE_tag 鉛直=3078mm(水平=138mm)。真アンカー版
+  (5990mm)より小さく **ΔRMSE_tag_v が負** = 近共面は VDOP≈9〜12 が測距ノイズを増幅し幾何自体が
+  破綻(校正誤差の加算では説明できない)。高さ多様40mでは VDOP≈2, ΔRMSE_tag_v≈+3mm と正常化。
+  C(200mm)=4%, C(100mm)=1%。
+- **所見4(追補①破綻マップ)**: 剛性破綻=R_max≲70m で全域 rigidity_ok=False(周長配置の対角
+  ≈141m が閾。N_a には非依存)。精度破綻=近共面基底では σ_deploy×σ_r 全30セルで C(200mm)<10%
+  (σ_r が支配, σ_deploy はほぼ無関係)=幾何律速。
+- **所見5(追補④N_a)**: N_a=5→16 で鉛直 shape RMSE は ≈530→1000mm と頭打ち。台数を増やしても
+  同一平面上なら鉛直は改善せず ⇒ 効くのは台数でなく高さ多様性(所見2改を補強)。
+- Phase C: 多スタート一意性検査(離散不定性検出)・E3(2D校正モード)・(T-008)推定器比較。

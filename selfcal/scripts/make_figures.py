@@ -2,13 +2,19 @@
 
 スイープ軸を自動判定する:
   - 1軸のみ変動 → 感度曲線(中央値 + IQR 帯)
-  - 2軸変動      → ヒートマップ(セル=中央値指標。剛性破綻セルは×で明示)
+  - 2軸変動      → ヒートマップ(セル=中央値指標)
+
+破綻は2種類を区別して重畳表示する(追補①):
+  - 剛性破綻(×, 赤): rigidity_ok=False が過半 → 校正不能
+  - 精度破綻(△, 橙): 中央値 coverage C(200mm) < 95% → 測位精度が要求水準に届かない
+凡例に両定義を明記する。coverage 列が無い CSV(タグ測位 OFF)では剛性破綻のみ表示。
 
 依存は matplotlib のみ(集計は標準ライブラリ)。ヘッドレス(Agg)で PNG を書き出す。
 
 例:
-    python scripts/make_figures.py --csv results/e2_sigma_r.csv --out results/e2_sigma_r.png
-    python scripts/make_figures.py --csv results/e2_grid.csv    --out results/e2_grid.png
+    python scripts/make_figures.py --csv results/e2_sigma_r.csv        --out results/e2_sigma_r.png
+    python scripts/make_figures.py --csv results/e2_grid.csv           --out results/e2_grid.png --metric coverage
+    python scripts/make_figures.py --csv results/e2_grid_rigidity.csv  --out results/e2_grid_rigidity.png
 """
 from __future__ import annotations
 
@@ -31,6 +37,9 @@ AXIS_LABELS = {
     "r_max_mm": "R_max [mm]",
     "known_z_max_mm": "elevated known-anchor z [mm]",
 }
+
+# 精度破綻のしきい値: 中央値 coverage C(200mm) がこの値を下回るセルを破綻とみなす。
+COVERAGE_TARGET = 0.95
 
 
 def _read_rows(path: pathlib.Path) -> list[dict]:
@@ -72,6 +81,22 @@ def _rigidity_fail_frac(rows: list[dict]) -> float:
     return sum(failed(r) for r in rows) / len(rows)
 
 
+def _has_coverage(rows: list[dict]) -> bool:
+    """coverage 列が有効値を持つか(タグ測位 ON の CSV か)。"""
+    return any(
+        r.get("coverage", "").strip() not in ("", "nan", "NaN")
+        for r in rows
+    )
+
+
+def _median_coverage(rows: list[dict]) -> float:
+    vals = [
+        _to_float(r["coverage"]) for r in rows
+        if r.get("coverage", "").strip() not in ("", "nan", "NaN")
+    ]
+    return statistics.median(vals) if vals else float("nan")
+
+
 def plot_curve(rows: list[dict], axis: str, metric: str, out: pathlib.Path) -> None:
     by_x: dict[float, list[dict]] = defaultdict(list)
     for r in rows:
@@ -102,23 +127,53 @@ def plot_heatmap(rows: list[dict], ax_x: str, ax_y: str, metric: str,
     ys = sorted({k[1] for k in cell})
     grid = [[_median(cell[(x, y)], metric) for x in xs] for y in ys]
 
-    fig, ax = plt.subplots(figsize=(6.5, 5.0))
+    has_cov = _has_coverage(rows)
+
+    fig, ax = plt.subplots(figsize=(7.2, 5.2))
     im = ax.imshow(grid, origin="lower", aspect="auto", cmap="viridis")
     ax.set_xticks(range(len(xs)), [f"{x:g}" for x in xs])
     ax.set_yticks(range(len(ys)), [f"{y:g}" for y in ys])
     ax.set_xlabel(AXIS_LABELS.get(ax_x, ax_x))
     ax.set_ylabel(AXIS_LABELS.get(ax_y, ax_y))
-    ax.set_title(f"Breakdown map: median {metric}  (x=rigidity fail)")
-    # 剛性破綻セル(rigidity_ok=False が過半)を × で明示。
+    ax.set_title(f"Breakdown map: median {metric}")
+
+    # 2種の破綻を区別して重畳(追補①):
+    #   剛性破綻(×赤): rigidity_ok=False が過半 → 校正不能
+    #   精度破綻(△橙): 中央値 coverage < COVERAGE_TARGET → 精度が要求水準未満
+    n_rig = n_prec = 0
     for iy, y in enumerate(ys):
         for ix, x in enumerate(xs):
-            if _rigidity_fail_frac(cell[(x, y)]) > 0.5:
+            crows = cell[(x, y)]
+            if _rigidity_fail_frac(crows) > 0.5:
                 ax.text(ix, iy, "×", ha="center", va="center",
-                        color="red", fontsize=14, fontweight="bold")
-    fig.colorbar(im, ax=ax, label=f"median {metric} [mm]")
+                        color="red", fontsize=15, fontweight="bold")
+                n_rig += 1
+            elif has_cov and _median_coverage(crows) < COVERAGE_TARGET:
+                ax.text(ix, iy, "△", ha="center", va="center",
+                        color="orange", fontsize=14, fontweight="bold")
+                n_prec += 1
+
+    # 凡例(破綻定義を明記)。マーカーは proxy で示す。
+    handles = [
+        plt.Line2D([], [], marker="x", color="red", linestyle="None",
+                   markersize=10, markeredgewidth=2.5,
+                   label="rigidity breakdown (rigidity_ok=False)"),
+    ]
+    if has_cov:
+        handles.append(
+            plt.Line2D([], [], marker="^", color="orange", linestyle="None",
+                       markersize=10,
+                       label=f"precision breakdown (C(200mm) < {COVERAGE_TARGET:.0%})")
+        )
+    ax.legend(handles=handles, loc="upper center",
+              bbox_to_anchor=(0.5, -0.13), ncol=1, fontsize=8, frameon=False)
+
+    fig.colorbar(im, ax=ax, label=f"median {metric}")
     fig.tight_layout()
     fig.savefig(out, dpi=130)
     plt.close(fig)
+    print(f"  breakdown cells: rigidity={n_rig}, precision={n_prec}"
+          f"{'' if has_cov else ' (coverage 列なし=剛性のみ判定)'}")
 
 
 def main(argv: list[str] | None = None) -> int:
