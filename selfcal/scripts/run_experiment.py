@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import pathlib
+import statistics
 import sys
 
 _HERE = pathlib.Path(__file__).resolve().parent          # <repo>/selfcal/scripts
@@ -45,6 +46,15 @@ def main(argv: list[str] | None = None) -> int:
         rows = run_condition(cfg, condition_id=cid)
         all_rows.extend(rows)
         print(f"[{args.exp}] condition {cid}: {len(rows)} trials")
+
+    # profiler サマリ(§7): 試行あたり計算時間の分布と総計。
+    times = [r["compute_time_s"] for r in all_rows if "compute_time_s" in r]
+    if times:
+        print(
+            f"[profile] trials={len(times)} total={sum(times):.1f}s "
+            f"median={statistics.median(times) * 1e3:.1f}ms/trial "
+            f"max={max(times) * 1e3:.1f}ms"
+        )
 
     out = args.out or f"results/{args.exp.lower()}.csv"
     path = write_long_csv(all_rows, out)

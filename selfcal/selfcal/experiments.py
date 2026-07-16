@@ -19,6 +19,9 @@ SIGMA_V_SWEEP = [50.0, 150.0, 300.0]              # v1.1 公称150 を含む
 SIGMA_DEPLOY_SWEEP = [100.0, 300.0, 600.0, 1000.0]
 N_ANCHORS_SWEEP = [4, 6, 8, 9, 12]                 # 推奨下限9 を含む(E1公称は8)
 R_MAX_SWEEP = [80000.0, 100000.0, 120000.0, 150000.0]
+# 高さ多様性: 既知1台(index 3)の仰角を上げ、残り3台は z=1500 に固定。
+# 「高さ多様性=3D自己校正の成立条件」(V-8 の主張)を鉛直RMSEで定量化する。
+HEIGHT_DIVERSITY_SWEEP = [1500.0, 2900.0, 5000.0, 10000.0, 20000.0, 40000.0]
 
 # スイープは校正・剛性の感度が対象。タグ測位を切って計算負荷を落とす。
 _SWEEP_BASE = {"tag_positioning": {"enabled": False}}
@@ -88,6 +91,12 @@ def e2_r_max(base_cfg):
     return ofat(_sweep_base(base_cfg), "ranging", "r_max_mm", R_MAX_SWEEP)
 
 
+def e2_height_diversity(base_cfg):
+    """既知アンカー1台の仰角スイープ。鉛直自己校正の成立条件を定量化。"""
+    known_z_lists = [[1500.0, 1500.0, 1500.0, z] for z in HEIGHT_DIVERSITY_SWEEP]
+    return ofat(_sweep_base(base_cfg), "known", "known_z_mm", known_z_lists)
+
+
 # --- E2 破綻領域マップ(2軸グリッド) ---
 def e2_grid_deploy_r(base_cfg):
     """σ_deploy × σ_r の破綻領域ヒートマップ。"""
@@ -106,6 +115,7 @@ EXPERIMENTS: dict[str, Callable[[Mapping[str, Any]], list[tuple[dict, int]]]] = 
     "E2_sigma_deploy": e2_sigma_deploy,
     "E2_n_anchors": e2_n_anchors,
     "E2_r_max": e2_r_max,
+    "E2_height_diversity": e2_height_diversity,
     "E2_grid": e2_grid_deploy_r,
 }
 

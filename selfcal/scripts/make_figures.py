@@ -29,6 +29,7 @@ AXIS_LABELS = {
     "sigma_deploy_mm": "σ_deploy [mm]",
     "n_anchors": "N_a",
     "r_max_mm": "R_max [mm]",
+    "known_z_max_mm": "elevated known-anchor z [mm]",
 }
 
 

@@ -69,6 +69,8 @@ def run_single_trial(
     row["sigma_deploy_mm"] = cfg["deployment"]["sigma_deploy_mm"]
     row["sigma_v_mm"] = cfg["deployment"]["sigma_v_mm"]
     row["r_max_mm"] = cfg["ranging"]["r_max_mm"]
+    # 高さ多様性スイープの軸(条件内で一定なスカラー): 既知アンカー最大高さ。
+    row["known_z_max_mm"] = float(max(cfg["known"]["known_z_mm"]))
     row["gauge"] = cfg["calibration"]["gauge"]
     row["dof"] = cfg["calibration"]["dof"]
     return row

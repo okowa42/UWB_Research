@@ -57,7 +57,22 @@
       "Bash(.venv/bin/python -c ' *)",
       "Bash(.venv/bin/python -m pytest tests/ -v)",
       "Bash(.venv/bin/python -m pytest tests/ -q)",
-      "Bash(time .venv/bin/python scripts/run_experiment.py --exp E1 --out results/e1_base.csv)"
+      "Bash(time .venv/bin/python scripts/run_experiment.py --exp E1 --out results/e1_base.csv)",
+      "Bash([ -d \"$DIR\" ])",
+      "Bash(cp docs/status.md '/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md')",
+      "Bash(timeout 400 .venv/bin/pip install -q matplotlib)",
+      "Bash(.venv/bin/python -c \"import matplotlib; print\\('matplotlib', matplotlib.__version__\\)\")",
+      "Bash(.venv/bin/python scripts/run_experiment.py --exp E2_sigma_r --n-mc 60 --out results/e2_sigma_r.csv)",
+      "Bash(.venv/bin/python scripts/run_experiment.py --exp E2_grid --n-mc 30 --out results/e2_grid.csv)",
+      "Bash(.venv/bin/python scripts/make_figures.py --csv results/e2_sigma_r.csv --out results/e2_sigma_r.png)",
+      "Bash(.venv/bin/python scripts/make_figures.py --csv results/e2_grid.csv --out results/e2_grid.png)",
+      "Bash(git -C /home/akarihirohara/UWB_Research add selfcal/selfcal/experiments.py selfcal/selfcal/pipeline.py selfcal/scripts/make_figures.py selfcal/tests/test_verification.py selfcal/README.md)",
+      "Bash(git -C /home/akarihirohara/UWB_Research status --short)",
+      "Bash(git -C /home/akarihirohara/UWB_Research commit -q -m ' *)",
+      "Bash(git -C /home/akarihirohara/UWB_Research log --oneline -4)",
+      "Bash(cp /home/akarihirohara/UWB_Research/docs/status.md '/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md')",
+      "Bash(git -C /home/akarihirohara/UWB_Research add docs/status.md)",
+      "Bash(git -C /home/akarihirohara/UWB_Research log --oneline -5)"
     ],
     "additionalDirectories": [
       "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料"
