@@ -43,7 +43,21 @@
       "Bash(cd /mnt/vault && echo \"=== projects/研究.md ===\" && cat \"_Dev/context/projects/研究.md\"; echo \"=== 01_Projects/研究 ===\" && ls -la 01_Projects/研究/)",
       "Bash(python3 -c \"d=open\\('_Dev/context/projects/研究.md','rb'\\).read\\(\\); print\\('研究.md NUL:', d.count\\(b'\\\\x00'\\)\\)\")",
       "Bash(python3 -c ' *)",
-      "Bash(git commit -q -m ' *)"
+      "Bash(git commit -q -m ' *)",
+      "Bash(pdop/env/bin/python -c \"import numpy,scipy,yaml; print\\('numpy',numpy.__version__,'scipy',scipy.__version__,'yaml ok'\\)\")",
+      "Bash(python3 -c \"import numpy,scipy,yaml,pytest; print\\('sys ok', numpy.__version__\\)\")",
+      "Read(//home/akarihirohara/**)",
+      "Bash(pdop/env/bin/pip list *)",
+      "Bash(timeout 8 pdop/env/bin/pip install --dry-run pyyaml)",
+      "Bash(python3 -c \"import venv; print\\('venv ok'\\)\")",
+      "Bash(python3 -m venv selfcal/.venv)",
+      "Bash(timeout 300 selfcal/.venv/bin/pip install -q --upgrade pip)",
+      "Bash(timeout 400 selfcal/.venv/bin/pip install -q numpy scipy pyyaml pytest)",
+      "Bash(selfcal/.venv/bin/python -c \"import numpy,scipy,yaml,pytest; print\\('numpy',numpy.__version__,'scipy',scipy.__version__\\)\")",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/python -m pytest tests/ -v)",
+      "Bash(.venv/bin/python -m pytest tests/ -q)",
+      "Bash(time .venv/bin/python scripts/run_experiment.py --exp E1 --out results/e1_base.csv)"
     ],
     "additionalDirectories": [
       "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料"
