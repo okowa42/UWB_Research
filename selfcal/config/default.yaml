@@ -9,6 +9,8 @@ deployment:
   z_nominal_mm: 1500.0      # 一般アンカーの公称高さ
   sigma_deploy_mm: 300.0    # 水平方向の展開誤差 σ_deploy
   sigma_v_mm: 150.0         # 鉛直方向の展開誤差 σ_v(v1.1 公称150)。スイープ [50,150,300]
+  height_pattern: null      # E2c: 未知アンカー意図高さパターン識別子(記録用ラベル)
+  unknown_z_spec: null      # E2c: 未知アンカー高さ指定 {levels:[...]} / {uniform:[lo,hi]}。null=全台 z_nominal
 
 # --- 既知アンカー (G1) ---
 # 非共面必須(共面だと鏡映が固定できない)。3台 z=1500, 1台 z=2900。

@@ -56,8 +56,49 @@ def _grid_xy(n: int, area_mm: float) -> np.ndarray:
     return grid[:n]
 
 
-def intended_layout(cfg: dict) -> tuple[np.ndarray, np.ndarray]:
-    """意図配置 (N,3) と既知アンカー index を返す(誤差なし)。"""
+def _apply_unknown_height_spec(
+    z: np.ndarray,
+    known_idx: np.ndarray,
+    spec: dict | None,
+    rng: np.random.Generator | None,
+) -> None:
+    """未知アンカー(known_idx 以外)の意図高さを spec に従って上書きする(E2c)。
+
+    spec の形式:
+      - {"levels": [...]}    : レベル列を index 順に巡回割当(層化・交互配置)。
+      - {"uniform": [lo,hi]} : 一様乱数で試行毎に引き直す(rng 必須)。
+    spec が None のときは既定(全台 z_nominal)のまま何もしない。
+    """
+    if spec is None:
+        return
+    n = z.shape[0]
+    known_set = set(int(i) for i in known_idx.tolist())
+    unknown = np.array([i for i in range(n) if i not in known_set], dtype=int)
+    if unknown.size == 0:
+        return
+    levels = spec.get("levels")
+    uniform = spec.get("uniform")
+    if levels is not None:
+        lv = np.asarray(levels, dtype=float)
+        # index 順に巡回割当(未知アンカー数 > レベル数でも循環でカバー)
+        z[unknown] = lv[np.arange(unknown.size) % lv.size]
+    elif uniform is not None:
+        if rng is None:
+            raise ValueError("uniform 高さ spec には rng が必要(試行毎の引き直し)")
+        lo, hi = float(uniform[0]), float(uniform[1])
+        z[unknown] = rng.uniform(lo, hi, unknown.size)
+    else:
+        raise ValueError(f"未知の高さ spec: {spec!r}(levels か uniform を指定)")
+
+
+def intended_layout(
+    cfg: dict, rng: np.random.Generator | None = None
+) -> tuple[np.ndarray, np.ndarray]:
+    """意図配置 (N,3) と既知アンカー index を返す(誤差なし)。
+
+    rng は未知アンカー高さの一様ランダム spec(E2c H3/H4)でのみ消費する。
+    それ以外の spec / spec なしでは rng を引かないため既存実験の乱数列は不変。
+    """
     dep = cfg["deployment"]
     known = cfg["known"]
     n = int(dep["n_anchors"])
@@ -80,6 +121,9 @@ def intended_layout(cfg: dict) -> tuple[np.ndarray, np.ndarray]:
             raise ValueError("known_idx がアンカー数を超えている")
         # 既知アンカーは非共面高さで上書き(G1: 鏡映固定のため)
         z[known_idx] = known_z
+
+    # E2c: 未知アンカーの意図高さパターン(spec なしなら全台 z_nominal のまま)。
+    _apply_unknown_height_spec(z, known_idx, dep.get("unknown_z_spec"), rng)
 
     xyz = np.column_stack([xy, z])
     return xyz, known_idx
@@ -114,7 +158,7 @@ def add_deployment_error(
 def build_deployment(cfg: dict, rng: np.random.Generator) -> Deployment:
     """A 段の統括: 意図配置生成 + 展開誤差付加。"""
     dep = cfg["deployment"]
-    intended, known_idx = intended_layout(cfg)
+    intended, known_idx = intended_layout(cfg, rng)
     true_xyz = add_deployment_error(
         intended,
         known_idx,

@@ -73,4 +73,12 @@ def run_single_trial(
     row["known_z_max_mm"] = float(max(cfg["known"]["known_z_mm"]))
     row["gauge"] = cfg["calibration"]["gauge"]
     row["dof"] = cfg["calibration"]["dof"]
+    # E2c: 未知アンカー高さ分散パターンのラベルと、この試行で実現した未知アンカー高さの
+    # 標準偏差(H3/H4 は試行毎に変動するため実測値を記録する)。
+    row["height_pattern"] = cfg["deployment"].get("height_pattern") or ""
+    known_idx = set(int(i) for i in cfg["known"]["known_idx"])
+    unknown = [i for i in range(dep.intended_xyz_mm.shape[0]) if i not in known_idx]
+    row["unknown_z_std_mm"] = (
+        float(dep.intended_xyz_mm[unknown, 2].std()) if unknown else 0.0
+    )
     return row

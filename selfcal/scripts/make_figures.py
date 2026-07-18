@@ -176,19 +176,71 @@ def plot_heatmap(rows: list[dict], ax_x: str, ax_y: str, metric: str,
           f"{'' if has_cov else ' (coverage 列なし=剛性のみ判定)'}")
 
 
+def plot_categorical_box(rows: list[dict], group: str, metric: str,
+                         out: pathlib.Path) -> None:
+    """カテゴリ列(例: height_pattern)で metric を箱ひげ表示(E2c)。
+
+    群ごとの中央値 C(200mm) を各箱の下に注記する(タグ測位 ON の CSV のみ)。
+    群の並びは初出順(H0,H1,... の宣言順)を保つ。
+    """
+    order: list[str] = []
+    by_g: dict[str, list[dict]] = defaultdict(list)
+    for r in rows:
+        g = r[group]
+        if g not in by_g:
+            order.append(g)
+        by_g[g].append(r)
+
+    data = [[_to_float(r[metric]) for r in by_g[g]] for g in order]
+    meds = [statistics.median(d) for d in data]
+    has_cov = _has_coverage(rows)
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.6))
+    ax.boxplot(data, tick_labels=order, showmeans=True)
+    ax.set_xlabel(group)
+    ax.set_ylabel(metric)
+    ax.set_title(f"{metric} by {group}")
+    ax.grid(True, axis="y", alpha=0.3)
+
+    # 各群の中央値と(あれば)C(200mm) を注記。
+    ymax = max((max(d) for d in data if d), default=1.0)
+    for i, g in enumerate(order, start=1):
+        note = f"med={meds[i - 1]:.0f}"
+        if has_cov:
+            note += f"\nC200={_median_coverage(by_g[g]):.0%}"
+        ax.annotate(note, (i, ymax), ha="center", va="bottom", fontsize=8,
+                    color="#1f4e9c")
+    ax.set_ylim(top=ymax * 1.18)
+    fig.tight_layout()
+    fig.savefig(out, dpi=130)
+    plt.close(fig)
+    print(f"  categorical box: {group} 群={len(order)}, metric={metric}")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="E2 感度曲線 / 破綻領域ヒートマップ描画")
     ap.add_argument("--csv", required=True, help="入力 long-format CSV")
     ap.add_argument("--out", required=True, help="出力 PNG パス")
     ap.add_argument("--metric", default="rmse_anchor_shape_mm", help="集計対象の列")
+    ap.add_argument("--group", default=None,
+                    help="カテゴリ列で箱ひげ表示(例: height_pattern, E2c 用)")
     args = ap.parse_args(argv)
 
     rows = _read_rows(pathlib.Path(args.csv))
     if not rows:
         raise SystemExit(f"空の CSV: {args.csv}")
-    axes = _varying_axes(rows)
     out = pathlib.Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
+
+    # カテゴリ群指定(E2c)は数値スイープ軸判定より優先する。
+    if args.group is not None:
+        if args.group not in rows[0]:
+            raise SystemExit(f"群列が CSV に無い: {args.group}")
+        plot_categorical_box(rows, args.group, args.metric, out)
+        print(f"箱ひげを書き出し: {out} (群={args.group}, metric={args.metric})")
+        return 0
+
+    axes = _varying_axes(rows)
 
     if len(axes) == 0:
         raise SystemExit("スイープ軸が検出できない(全条件が同一)。E2 の CSV を渡すこと。")

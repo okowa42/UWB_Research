@@ -18,7 +18,7 @@ _DEFAULT_PATH = pathlib.Path(__file__).resolve().parents[2] / "config" / "defaul
 _SCHEMA: dict[str, set[str]] = {
     "deployment": {
         "n_anchors", "pattern", "area_mm", "z_nominal_mm",
-        "sigma_deploy_mm", "sigma_v_mm",
+        "sigma_deploy_mm", "sigma_v_mm", "height_pattern", "unknown_z_spec",
     },
     "known": {"k_known", "known_idx", "known_z_mm"},
     "ranging": {

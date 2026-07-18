@@ -34,6 +34,19 @@ HEIGHT_DIVERSITY_SWEEP = [
     10000.0, 40000.0,  # 参考点(実現性が弱い理論上限)
 ]
 
+# E2c: 未知アンカー(N_a-k 台)の意図高さパターン(依頼 E2c §2, 仕様 v1.2 §6)。
+# 既知4台の高さは §4.4 規定(1,500×3 + 2,900)のまま固定し、未知アンカーの
+# 高さ分散だけを振って「実現可能域内の複数台高さ分散で鉛直精度が実用域に届くか」を検証する。
+# levels は index 順に巡回割当、uniform は試行毎に一様乱数で引き直す。
+# 高さは実現可能域(着陸機構体 400〜2,900mm、H4 のみ上限5,000mm 感度確認)に収める。
+HEIGHT_PATTERNS = [
+    ("H0", {"levels": [1500.0]}),                       # 全台 1,500mm(基準・E1 相当)
+    ("H1", {"levels": [400.0, 2900.0]}),                # 2水準交互
+    ("H2", {"levels": [400.0, 1650.0, 2900.0, 1650.0]}),  # 3水準層化(4台例: 400/1650/2900/1650)
+    ("H3", {"uniform": [400.0, 2900.0]}),               # 一様ランダム(実現可能域)
+    ("H4", {"uniform": [400.0, 5000.0]}),               # 一様ランダム(上限拡張・参考)
+]
+
 # --- 破綻領域マップ専用スイープ(追補①) ---
 # 剛性破綻(rigidity_ok=False): N_a を絞り R_max を 23,000mm 側へ下げると欠測が
 # 増え自由アンカーの剛性が割れる。N_a=4 は既知4台と一致し自由アンカー0=退化のため
@@ -124,6 +137,23 @@ def e2_height_diversity(base_cfg):
     return ofat(_sweep_base(base_cfg), "known", "known_z_mm", known_z_lists)
 
 
+def e2c_height_patterns(base_cfg):
+    """E2c: 未知アンカーの高さ分散パターン H0〜H4 を1条件ずつ展開(依頼 E2c)。
+
+    タグ側 C(200mm)・VDOP を答えたい問い(§2)に含むためタグ測位は ON のまま
+    (_sweep_base を通さない)。各パターンは height_pattern ラベルと unknown_z_spec を
+    deployment に注入する。condition_id は 0..len(HEIGHT_PATTERNS)-1。
+    """
+    conditions: list[tuple[dict, int]] = []
+    for cid, (label, spec) in enumerate(HEIGHT_PATTERNS):
+        cfg = deep_merge(
+            dict(base_cfg),
+            {"deployment": {"height_pattern": label, "unknown_z_spec": spec}},
+        )
+        conditions.append((cfg, cid))
+    return conditions
+
+
 # --- E2 破綻領域マップ(2軸グリッド, 追補①: 2種の破綻を区別) ---
 def e2_grid_precision(base_cfg):
     """精度破綻マップ: σ_deploy × σ_r。
@@ -163,6 +193,7 @@ EXPERIMENTS: dict[str, Callable[[Mapping[str, Any]], list[tuple[dict, int]]]] = 
     "E2_height_diversity": e2_height_diversity,
     "E2_grid": e2_grid_precision,        # 精度破綻(coverage)
     "E2_grid_rigidity": e2_grid_rigidity,  # 剛性破綻(rigidity_ok)
+    "E2c": e2c_height_patterns,          # 未知アンカー高さ分散パターン(H0〜H4)
 }
 
 

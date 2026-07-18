@@ -103,7 +103,11 @@
       "Bash(git commit *)",
       "Bash(.venv/bin/python scripts/run_experiment.py --exp E3 --out results/e3_2d.csv --n-mc 100)",
       "Bash(python3 -c \"d=open\\('/mnt/vault/_Dev/context/hot.md','rb'\\).read\\(\\); print\\('size',len\\(d\\),'NUL',d.count\\(b'\\\\x00'\\)\\)\")",
-      "Bash(git commit -q -m 'セッション終了: settings に push 許可を追加 *)"
+      "Bash(git commit -q -m 'セッション終了: settings に push 許可を追加 *)",
+      "Bash(find / -name \"*E2c*\")",
+      "Bash(find / -iname \"*260716*\")",
+      "Bash(ls -la \"/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/\" 2>/dev/null | grep -i \"E2c\\\\|260716\\\\|E2\\\\|実装依頼\")",
+      "Bash(git commit -q -m '案B Phase C: E2c 未知アンカー高さ分散パターン\\(H0〜H4\\)を実装 *)"
     ],
     "additionalDirectories": [
       "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料"
