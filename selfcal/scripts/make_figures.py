@@ -15,6 +15,7 @@
     python scripts/make_figures.py --csv results/e2_sigma_r.csv        --out results/e2_sigma_r.png
     python scripts/make_figures.py --csv results/e2_grid.csv           --out results/e2_grid.png --metric coverage
     python scripts/make_figures.py --csv results/e2_grid_rigidity.csv  --out results/e2_grid_rigidity.png
+    python scripts/make_figures.py --csv results/e2c_patterns.csv --out results/e2c_tag_v.png --group height_pattern --metric rmse_tag_v_mm --logy
 """
 from __future__ import annotations
 
@@ -97,7 +98,17 @@ def _median_coverage(rows: list[dict]) -> float:
     return statistics.median(vals) if vals else float("nan")
 
 
-def plot_curve(rows: list[dict], axis: str, metric: str, out: pathlib.Path) -> None:
+def _drop_nonpositive(data: list[list[float]], label: str) -> list[list[float]]:
+    """対数軸では非正値を描けないため除外し、除外件数を報告する。"""
+    kept = [[v for v in d if v > 0] for d in data]
+    dropped = sum(len(d) for d in data) - sum(len(d) for d in kept)
+    if dropped:
+        print(f"  logy: 非正値 {dropped} 件を除外({label})")
+    return kept
+
+
+def plot_curve(rows: list[dict], axis: str, metric: str, out: pathlib.Path,
+               logy: bool = False) -> None:
     by_x: dict[float, list[dict]] = defaultdict(list)
     for r in rows:
         by_x[_to_float(r[axis])].append(r)
@@ -111,6 +122,8 @@ def plot_curve(rows: list[dict], axis: str, metric: str, out: pathlib.Path) -> N
     ax.set_xlabel(AXIS_LABELS.get(axis, axis))
     ax.set_ylabel(f"{metric}")
     ax.set_title(f"Sensitivity: {metric} vs {AXIS_LABELS.get(axis, axis)}")
+    if logy:
+        ax.set_yscale("log")
     ax.grid(True, alpha=0.3)
     ax.legend()
     fig.tight_layout()
@@ -177,11 +190,13 @@ def plot_heatmap(rows: list[dict], ax_x: str, ax_y: str, metric: str,
 
 
 def plot_categorical_box(rows: list[dict], group: str, metric: str,
-                         out: pathlib.Path) -> None:
+                         out: pathlib.Path, logy: bool = False) -> None:
     """カテゴリ列(例: height_pattern)で metric を箱ひげ表示(E2c)。
 
     群ごとの中央値 C(200mm) を各箱の下に注記する(タグ測位 ON の CSV のみ)。
     群の並びは初出順(H0,H1,... の宣言順)を保つ。
+    logy=True で縦軸を対数にする。タグ鉛直 RMSE は近共面で測位が発散する試行が
+    数%あり(E2c: 最大 1e8 mm 級)、線形軸では箱が潰れて読めないため。
     """
     order: list[str] = []
     by_g: dict[str, list[dict]] = defaultdict(list)
@@ -192,11 +207,15 @@ def plot_categorical_box(rows: list[dict], group: str, metric: str,
         by_g[g].append(r)
 
     data = [[_to_float(r[metric]) for r in by_g[g]] for g in order]
+    if logy:
+        data = _drop_nonpositive(data, metric)
     meds = [statistics.median(d) for d in data]
     has_cov = _has_coverage(rows)
 
     fig, ax = plt.subplots(figsize=(7.2, 4.6))
     ax.boxplot(data, tick_labels=order, showmeans=True)
+    if logy:
+        ax.set_yscale("log")
     ax.set_xlabel(group)
     ax.set_ylabel(metric)
     ax.set_title(f"{metric} by {group}")
@@ -210,7 +229,8 @@ def plot_categorical_box(rows: list[dict], group: str, metric: str,
             note += f"\nC200={_median_coverage(by_g[g]):.0%}"
         ax.annotate(note, (i, ymax), ha="center", va="bottom", fontsize=8,
                     color="#1f4e9c")
-    ax.set_ylim(top=ymax * 1.18)
+    # 対数軸は倍率が log 上の短距離になるため、注記2行分の余白を大きめに取る。
+    ax.set_ylim(top=ymax * (8.0 if logy else 1.18))
     fig.tight_layout()
     fig.savefig(out, dpi=130)
     plt.close(fig)
@@ -224,6 +244,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--metric", default="rmse_anchor_shape_mm", help="集計対象の列")
     ap.add_argument("--group", default=None,
                     help="カテゴリ列で箱ひげ表示(例: height_pattern, E2c 用)")
+    ap.add_argument("--logy", action="store_true",
+                    help="縦軸を対数にする(外れ値の裾が長い指標用。非正値は除外)")
     args = ap.parse_args(argv)
 
     rows = _read_rows(pathlib.Path(args.csv))
@@ -236,7 +258,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.group is not None:
         if args.group not in rows[0]:
             raise SystemExit(f"群列が CSV に無い: {args.group}")
-        plot_categorical_box(rows, args.group, args.metric, out)
+        plot_categorical_box(rows, args.group, args.metric, out, logy=args.logy)
         print(f"箱ひげを書き出し: {out} (群={args.group}, metric={args.metric})")
         return 0
 
@@ -245,7 +267,7 @@ def main(argv: list[str] | None = None) -> int:
     if len(axes) == 0:
         raise SystemExit("スイープ軸が検出できない(全条件が同一)。E2 の CSV を渡すこと。")
     elif len(axes) == 1:
-        plot_curve(rows, axes[0], args.metric, out)
+        plot_curve(rows, axes[0], args.metric, out, logy=args.logy)
         print(f"感度曲線を書き出し: {out} (軸={axes[0]})")
     else:
         # 2軸を超える場合は先頭2軸でヒートマップ(残りは無視)。

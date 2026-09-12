@@ -25,11 +25,16 @@ cd selfcal
 .venv/bin/python scripts/run_experiment.py --exp E2_grid_rigidity --out results/e2_grid_rigidity.csv
 # 高さ多様性スイープ(鉛直自己校正の成立条件を定量化。1500-5000を500刻み+{10000,40000}参考点)
 .venv/bin/python scripts/run_experiment.py --exp E2_height_diversity --out results/e2_height.csv
+# E2c 未知アンカーの高さ分散パターン H0〜H4(タグ測位 ON。既知4台の高さは §4.4 規定のまま固定)
+.venv/bin/python scripts/run_experiment.py --exp E2c --out results/e2c_patterns.csv
 # 図(スイープ軸を自動判定: 1軸→感度曲線 / 2軸→破綻領域ヒートマップ。破綻は×剛性/△精度で色分け)
 .venv/bin/python scripts/make_figures.py --csv results/e2_sigma_r.csv        --out results/e2_sigma_r.png
 .venv/bin/python scripts/make_figures.py --csv results/e2_grid.csv           --out results/e2_grid.png --metric coverage
 .venv/bin/python scripts/make_figures.py --csv results/e2_grid_rigidity.csv  --out results/e2_grid_rigidity.png
 .venv/bin/python scripts/make_figures.py --csv results/e2_height.csv         --out results/e2_height_v.png --metric rmse_anchor_shape_v_mm
+# カテゴリ群の箱ひげ(--group)。裾が長い指標は --logy(タグ鉛直は発散試行で線形軸だと潰れる)
+.venv/bin/python scripts/make_figures.py --csv results/e2c_patterns.csv --out results/e2c_anchor_v.png --group height_pattern --metric rmse_anchor_shape_v_mm
+.venv/bin/python scripts/make_figures.py --csv results/e2c_patterns.csv --out results/e2c_tag_v.png --group height_pattern --metric rmse_tag_v_mm --logy
 ```
 
 ## パイプライン(A→E, §5)
@@ -41,7 +46,7 @@ cd selfcal
 | D | `tag_positioning.py` | 推定/真アンカーでタグ測位(同一ノイズ, ΔRMSE 分離) |
 | E | `metrics.py`, `alignment.py` | RMSE(H/V分解), Procrustes整列, PDOP過信度, カバレッジ |
 
-## 現状(Phase B + 追補 完了 / Phase C 着手)
+## 現状(Phase B + 追補 完了 / Phase C: 一意性検査・E3・E2c 完了)
 - **E0 全緑**: V-1〜V-9(V-9 多スタート一意性を追加, `pytest` 11 passed)。
 - **E2 感度スイープ実装済**: OFAT(σ_r/σ_v/σ_deploy/N_a/R_max/high_diversity)＋破綻領域マップ2種
   (精度破綻=σ_deploy×σ_r タグ測位ON / 剛性破綻=N_a×R_max タグ測位OFF)。`make_figures.py` が
@@ -62,7 +67,15 @@ cd selfcal
   (σ_r が支配, σ_deploy はほぼ無関係)=幾何律速。
 - **所見5(追補④N_a)**: N_a=5→16 で鉛直 shape RMSE は ≈530→1000mm と頭打ち。台数を増やしても
   同一平面上なら鉛直は改善せず ⇒ 効くのは台数でなく高さ多様性(所見2改を補強)。
-### Phase C(着手)
+- **所見6(E2c: 主張後段の棄却)**: 未知アンカー4台の意図高さを H0〜H4 で振っても、鉛直 shape RMSE は
+  1128→1006mm(最良 H4)にとどまり **H0 との差は統計的に有意でない**(Mann-Whitney p=0.057〜0.913、
+  中央値差のブートストラップ95%CI が 0 を跨ぐ)。タグ C(200mm) も 4.0→4.3% で不変。
+  **効くのは「高さ分散の総量(全アンカー z の std)」だけで、1台を高くするか複数台に散らすかは無関係**
+  (E2c の点が追補③の曲線に乗る)。改善は std ≳1800mm から始まり、実現可能域(高さ ≤5m, std ≤約1200mm)
+  では構造的にプラトーを抜けられない。⇒ 「複数台高さ分散で確保する」という主張は成立しない。
+  副次的発見: 近共面ではタグ測位が数%の試行で発散する(tag_v 最大 2.4e8 mm, 校正自体は収束・剛性OK)
+  ため、**評価は平均でなく中央値で行う**こと。
+### Phase C(一意性検査・E3・E2c 完了)
 - **多スタート一意性検査(`uniqueness.py`, V-9)**: 剛性ランクは局所一意性の必要条件だが鏡映等の
   離散不定性(大域一意性)は捕捉できない(§4.4 注意1)。複数初期値から自己校正し低残差解を
   回転のみ Procrustes で形状クラスタリング、相異なる解が2つ以上なら「離散不定性あり」と判定。
@@ -72,4 +85,9 @@ cd selfcal
   **アンカー鉛直 abs 2001→95mm / shape 1128→72mm と劇的に安定化**(鉛直の誤推定を回避)。ただし
   **タグ鉛直測位は 3078→6194mm と悪化**(z固定でアンカーがより共面化し VDOP 悪化)。⇒ 2D校正は
   アンカー自己校正を救うがタグ測位の律速(近共面 VDOP)は救えない=高さ多様性が本質という主張を補強。
-- 残: (T-008 相談後)推定器比較・PF 追加、E3 の多条件スイープ化、TBD-3 Nüchter 数値照合。
+- **E2c 高さ分散パターン(`--exp E2c`)**: 未知アンカーの意図高さを levels(層化巡回)/uniform(試行毎乱数)
+  で振る。既知4台は §4.4 規定固定。結果は所見6(主張後段の棄却)。σ_deploy=300mm(config既定)と
+  1,000mm(仕様書 §5 の E1 公称)の両系列で実行し全指標が一致 = σ_deploy 非依存を再確認。
+- 残: E3 の多条件スイープ化、一意性検査の MC 組込み、TBD-3 Nüchter 数値照合、
+  「std/D 比(D=配置スパン)が支配」仮説の検証(area_mm スイープ, **未検証**)。
+  推定器比較・PF 追加は T-008 決着(PF不採用・最小二乗固定)によりクローズ。
