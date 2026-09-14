@@ -2,9 +2,9 @@
 
 1試行 = 1行。列は行 dict のキー和集合(欠損は空欄)。決定的な列順で書き出す。
 
-V-6 の「同一 seed → CSV 完全一致」は *同一環境内* でのみ成立する。numpy/scipy/BLAS
-が変わると LM の収束経路が変わり個別試行値はズレる(2026-09-14 実測: 分布は一致、
-全行の値は不一致)。出自は provenance.write_meta が別途 .meta.json に記録する。
+V-6 の「同一 seed → CSV 完全一致」は同一環境内の再実行を前提とする。別の実行では
+全行の値が変わった例がある(2026-09-14 実測: 分布はほぼ一致、原因は未特定)。
+出自は provenance.write_meta が別途 .meta.json に記録する。
 標準ライブラリのみ使用。
 """
 from __future__ import annotations
