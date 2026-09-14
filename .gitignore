@@ -2,4 +2,6 @@ __pycache__/
 *.pyc
 env/
 .venv/
-selfcal/results/
+# results/ の CSV は「再実行しても同じ値にならない実験記録」なので git 管理する。
+# PNG は CSV から再生成できるため除外。(2026-09-14)
+selfcal/results/*.png

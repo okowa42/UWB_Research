@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "retroactive": true,
+  "retroactive_note": "この meta は CSV 生成時ではなく 2026-09-14 に遡及作成した。env と git は実測・推定であり、run_experiment.py が自動生成する meta と同等の確度はない。",
+  "exp_id": "E2_sigma_r",
+  "csv": "e2_sigma_r.csv",
+  "csv_sha256": "930adf3ac9fd2f87b8fbf7e555cc6f7785b9a838a26c673b6d3a4a83d2eead99",
+  "rows": 360,
+  "generated_at": "2026-07-16T10:33:09.990326+09:00",
+  "source_note": "同上",
+  "git": {
+    "available": true,
+    "commit": null,
+    "commit_estimation": {
+      "method": "mtime を挟む2コミットによる範囲推定",
+      "note": "生成時刻を挟む2コミットで範囲指定する。実験は多くの場合コミット前の working tree で実行されているため、実際のコード状態は next 側に近い。実例: e2_height.csv は追補③(仰角の500mm刻み細分)の掃引値を含むが、追補③のコミット 2ec84ca は生成時刻より後。",
+      "prev": {
+        "commit": "6fd8e4432eb078f2462f8748eb7abf85bb08da00",
+        "time": "2026-07-16T10:25:25+09:00",
+        "subject": "status.md を Phase A 完了へ更新: E0/E1緑・commit済を反映、次はPhase B"
+      },
+      "next": {
+        "commit": "41114f84f6f7f31cb86578cf97b338aa03aa98c2",
+        "time": "2026-07-16T10:35:13+09:00",
+        "subject": "案B Phase B: E2感度スイープ・破綻領域ヒートマップ・V-4/V-5 を実装"
+      }
+    },
+    "dirty": null
+  },
+  "env": {
+    "python": "3.10.12",
+    "numpy": "2.2.6",
+    "scipy": "1.15.3",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "hostname": "ah (WSL Ubuntu-22.04)",
+    "blas": {
+      "name": "scipy-openblas",
+      "version": "0.3.29"
+    }
+  },
+  "config": null
+}

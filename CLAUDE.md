@@ -12,12 +12,29 @@
 
 ## 安全管理・禁止事項（常時・最優先）
 - ファイルの編集・移動・削除の際は必ずユーザーに確認を求める。勝手に削除しない。
-- **/mnt/c 配下への書き込み禁止**。唯一の例外は
-  `.../Claude用参考資料/ClaudeCode_status_mirror.md` の上書きコピーのみ。
-- /mnt/c 配下の既存ファイルの編集・移動・削除は一切しない（読み取りは可）。
-- リポジトリを /mnt/c 配下に配置しない。
+- **WSL からの /mnt/c 配下への書き込み禁止**（読み取りは可）。
+  理由: OneDrive 同期が WSL/FUSE 経由の書き込みでファイルを破損させた実績があるため。
+  → 2026-09-14 以降このプロジェクトで WSL は使わないため、通常は抵触しない。
 - push は毎回ユーザーの確認を取る。
-- 理由: OneDrive 同期が WSL/FUSE 経由の書き込みでファイルを破損させた実績があるため。
+
+## 実行環境（2026-09-14 確定・Windows ネイティブ一本）
+- **リポジトリ正本**: `C:\Users\ahiro\OneDrive\ドキュメント\GitHub\UWB_Research`（これ1つだけ）
+- **Python**: `C:\Users\ahiro\.venvs\uwb\Scripts\python.exe`（OneDrive 外に配置）
+  - 依存は `selfcal/requirements.txt` にピン。再構築は
+    `python -m venv C:\Users\ahiro\.venvs\uwb` → `pip install -r selfcal/requirements.txt`
+  - Windows の **system Python には numpy が入っていない**。必ず上記 venv を使う。
+- **WSL はこのプロジェクトでは使わない**。旧クローンは 2026-09-14 に整理済み
+  （Ubuntu-20.04 は削除、Ubuntu-22.04 の `~/UWB_Research` は結果回収後に残置）。
+- **AkariVault** (`C:\Users\ahiro\AkariVault`) は OneDrive 配下ではない。ネイティブ書き込み可。
+
+## 実験結果の扱い（再現性）
+- `selfcal/results/*.csv` は **git 管理下**（PNG のみ gitignore）。再実行しても同じ値に
+  ならないため「生成物」ではなく「実験記録」として扱う。
+- `run_experiment.py` は CSV と同時に `<csv名>.meta.json`（commit・環境・config・
+  CSVハッシュ）を出力する。**図に使った数値は必ず meta とセットで残すこと。**
+- seed 固定でビット単位再現できるのは **同一環境内のみ**。numpy/scipy/BLAS が変わると
+  個別試行値はズレる（分布は一致）。論文・発表では中央値・四分位で語り、個別試行値には
+  依拠しない。
 
 ## セッション開始ルール
 1. **`docs/status.md`** を読む（このリポジトリの前回状態・次のToDo）。

@@ -1,0 +1,13 @@
+# selfcal 実行環境ピン(2026-09-14 確定)
+#
+# 版を固定する理由: seed を固定しても numpy/scipy/BLAS が変われば
+# scipy.least_squares の収束経路が変わり、個別試行の値はズレる(実測確認済み)。
+# 分布(中央値・四分位)は一致するため結論は動かないが、CSV を突き合わせる際は
+# この版が揃っているかを先に確認すること。詳細は selfcal/io/provenance.py。
+#
+# 2026-07 の WSL Ubuntu-22.04 実行環境に合わせてある(python のみ 3.10 → 3.12)。
+numpy==2.2.6
+scipy==1.15.3
+matplotlib==3.10.9
+PyYAML==6.0.3
+pytest==9.1.1

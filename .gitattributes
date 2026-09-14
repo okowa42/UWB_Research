@@ -1,0 +1,8 @@
+# 実験データは「バイト列そのもの」が記録である。meta.json の csv_sha256 と一致させる
+# ため、チェックアウト時の CRLF 変換を禁止する(core.autocrlf=true でも適用される)。
+*.csv       -text
+*.meta.json -text
+
+# 注: gdop/ は submodule のため、この .gitattributes は gdop 内には効かない。
+# gdop/workspace の実測 RTT ログ(116件)は 2026-09-14 時点で WSL=LF / Windows=CRLF に
+# 分裂していた(内容は一致)。必要なら gdop 側に同等の .gitattributes を置くこと。

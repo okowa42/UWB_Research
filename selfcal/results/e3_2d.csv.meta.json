@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "retroactive": true,
+  "retroactive_note": "この meta は CSV 生成時ではなく 2026-09-14 に遡及作成した。env と git は実測・推定であり、run_experiment.py が自動生成する meta と同等の確度はない。",
+  "exp_id": "E3",
+  "csv": "e3_2d.csv",
+  "csv_sha256": "b12a5478ea7b4b73f5fc09794bd9053ccc93ebb687ea2b58c45a866513754be2",
+  "rows": 100,
+  "generated_at": "2026-07-16T13:44:44.792813+09:00",
+  "source_note": "同上",
+  "git": {
+    "available": true,
+    "commit": null,
+    "commit_estimation": {
+      "method": "mtime を挟む2コミットによる範囲推定",
+      "note": "生成時刻を挟む2コミットで範囲指定する。実験は多くの場合コミット前の working tree で実行されているため、実際のコード状態は next 側に近い。実例: e2_height.csv は追補③(仰角の500mm刻み細分)の掃引値を含むが、追補③のコミット 2ec84ca は生成時刻より後。",
+      "prev": {
+        "commit": "2ec84cac794f62361fa28af02d656afa7ba620b0",
+        "time": "2026-07-16T13:35:34+09:00",
+        "subject": "案B Phase B 追補①〜④: 破綻マップ2種・タグ側誤差伝搬・仰角細分・N_a補完"
+      },
+      "next": {
+        "commit": "88ed070ae53e4d817c99a2c3a58e392ac0b480b8",
+        "time": "2026-07-16T13:47:17+09:00",
+        "subject": "案B Phase C 着手: 多スタート一意性検査(V-9)・E3 2D校正モード"
+      }
+    },
+    "dirty": null
+  },
+  "env": {
+    "python": "3.10.12",
+    "numpy": "2.2.6",
+    "scipy": "1.15.3",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "hostname": "ah (WSL Ubuntu-22.04)",
+    "blas": {
+      "name": "scipy-openblas",
+      "version": "0.3.29"
+    }
+  },
+  "config": null
+}

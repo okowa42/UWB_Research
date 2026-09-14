@@ -24,6 +24,7 @@ for _p in (str(_PROJ), str(_ROOT)):
 from selfcal.experiments import build_conditions          # noqa: E402
 from selfcal.io.config_loader import load_config           # noqa: E402
 from selfcal.io.exporters import write_long_csv            # noqa: E402
+from selfcal.io.provenance import write_meta               # noqa: E402
 from selfcal.montecarlo import run_condition               # noqa: E402
 
 
@@ -59,6 +60,10 @@ def main(argv: list[str] | None = None) -> int:
     out = args.out or f"results/{args.exp.lower()}.csv"
     path = write_long_csv(all_rows, out)
     print(f"wrote {len(all_rows)} rows -> {path}")
+
+    # 出自メタ(commit + 環境)を必ず添える。seed だけでは再現できないため。
+    meta_path = write_meta(path, args.exp, base_cfg, len(all_rows))
+    print(f"wrote provenance -> {meta_path}")
     return 0
 
 

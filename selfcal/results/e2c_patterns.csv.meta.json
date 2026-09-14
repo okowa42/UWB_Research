@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "retroactive": true,
+  "retroactive_note": "この meta は CSV 生成時ではなく 2026-09-14 に遡及作成した。env と git は実測・推定であり、run_experiment.py が自動生成する meta と同等の確度はない。",
+  "exp_id": "E2c",
+  "csv": "e2c_patterns.csv",
+  "csv_sha256": "4ece5fa96c440913143e03aff0a80c93baae189cf8f9a7703266ba53d636575e",
+  "rows": 500,
+  "generated_at": "2026-09-12T19:28:44.148460+09:00",
+  "source_note": "2026-09-12 実行。commit 9b9ac71 の所見6の根拠",
+  "git": {
+    "available": true,
+    "commit": null,
+    "commit_estimation": {
+      "method": "mtime を挟む2コミットによる範囲推定",
+      "note": "生成時刻を挟む2コミットで範囲指定する。実験は多くの場合コミット前の working tree で実行されているため、実際のコード状態は next 側に近い。実例: e2_height.csv は追補③(仰角の500mm刻み細分)の掃引値を含むが、追補③のコミット 2ec84ca は生成時刻より後。",
+      "prev": {
+        "commit": "e6d42d58f239c47d06b4a6dc09fdc5e1e241b4a7",
+        "time": "2026-07-18T09:50:10+09:00",
+        "subject": "案B Phase C: E2c 未知アンカー高さ分散パターン(H0〜H4)を実装"
+      },
+      "next": {
+        "commit": "9b9ac7197e62e7adf6cb0cb46daf89cfe52a448c",
+        "time": "2026-09-12T19:44:09+09:00",
+        "subject": "E2c を実行し、主張後段「複数台高さ分散で確保」を棄却"
+      }
+    },
+    "dirty": null
+  },
+  "env": {
+    "python": null,
+    "numpy": null,
+    "scipy": null,
+    "platform": null,
+    "hostname": null,
+    "blas": null
+  },
+  "config": null
+}
