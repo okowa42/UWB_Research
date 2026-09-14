@@ -18,7 +18,11 @@
 - push は毎回ユーザーの確認を取る。
 
 ## 実行環境（2026-09-14 確定・Windows ネイティブ一本）
-- **リポジトリ正本**: `C:\Users\ahiro\OneDrive\ドキュメント\GitHub\UWB_Research`（これ1つだけ）
+- **リポジトリ正本**: `C:\dev\UWB_Research`（これ1つだけ）
+  - 2026-09-14 に OneDrive 配下から移設。理由: `.git` が同期途中の状態で読まれると
+    リポジトリが不完全に見える（実際、移設前セッションで HEAD が1コミット古く見え、
+    results/ のファイルがセッション途中で出現する事象が起きた）。バックアップは
+    OneDrive ではなく GitHub remote に任せる。
 - **Python**: `C:\Users\ahiro\.venvs\uwb\Scripts\python.exe`（OneDrive 外に配置）
   - 依存は `selfcal/requirements.txt` にピン。再構築は
     `python -m venv C:\Users\ahiro\.venvs\uwb` → `pip install -r selfcal/requirements.txt`

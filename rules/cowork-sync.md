@@ -11,16 +11,22 @@
 | 設計指示 | Cowork→Code | 研究フォルダ `Claude用参考資料/` | Cowork・ユーザー | Claude Code（読取専用） |
 | コード規約 | 参照のみ | 研究フォルダ `CLAUDE.md` | ユーザー | Claude Code（読取専用） |
 
-## 重要パス（WSL側表記）
+## 重要パス（Windows ネイティブ表記・2026-09-14 更新）
 ```
-研究フォルダ:   /mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/
-設計指示置き場: 上記 + Claude用参考資料/
-ミラー先:       上記 + Claude用参考資料/ClaudeCode_status_mirror.md
+リポジトリ:     C:\dev\UWB_Research
+研究フォルダ:   C:\Users\ahiro\OneDrive - Chiba Institute of Technology\デスクトップ\Claude\大学\研究\
+設計指示置き場: 上記 + Claude用参考資料\
+ミラー先:       上記 + Claude用参考資料\ClaudeCode_status_mirror.md
 ```
-> 注意: OneDrive フォルダ名は組織テナント由来（`OneDrive - Chiba Institute of Technology`）。
+> 注意1: OneDrive フォルダ名は組織テナント由来（`OneDrive - Chiba Institute of Technology`）。
 > 個人用↔大学テナントの切替やテナント名変更で変わり得る。ミラー前に `ls` で実在を確認し、
-> 見つからなければ `/mnt/c/Users/ahiro/` 直下の `OneDrive*` を探して読み替えること
-> （2026-07-13 に `OneDrive/デスクトップ` → `OneDrive - Chiba Institute of Technology/デスクトップ` の移設実績あり）。
+> 見つからなければ `C:\Users\ahiro\` 直下の `OneDrive*` を探して読み替えること
+> （2026-07-13 に `OneDrive\デスクトップ` → `OneDrive - Chiba Institute of Technology\デスクトップ` の移設実績あり）。
+>
+> 注意2: 2026-09-14 に WSL 運用をやめ Windows ネイティブ一本にしたため、旧 `/mnt/c/...` 表記は廃止。
+> 同時にリポジトリを OneDrive 配下から `C:\dev\UWB_Research` へ移した
+> （`.git` が同期途中の状態で読まれる事故を避けるため）。研究フォルダ側は OneDrive のままでよい
+> （Cowork との受け渡しに同期が必要なため）。
 
 ## セッション開始時（詳細）
 - `docs/status.md` を読む（前回の状態・次のToDo）。
@@ -30,8 +36,9 @@
 1. `docs/status.md` を更新（書式は下記「status.md 書式」）。
 2. ミラーコピーと検証:
    ```bash
-   cp docs/status.md "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
-   cmp docs/status.md "/mnt/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
+   MIRROR="/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
+   cp docs/status.md "$MIRROR"
+   cmp docs/status.md "$MIRROR"
    ```
    `cmp` で一致を必ず確認（OneDrive 破損対策の検証習慣）。
 3. `git add -A && git commit`（メッセージ: 日本語で「何をなぜ」1行）。
