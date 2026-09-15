@@ -47,6 +47,20 @@ HEIGHT_PATTERNS = [
     ("H4", {"uniform": [400.0, 5000.0]}),               # 一様ランダム(上限拡張・参考)
 ]
 
+# 追補⑤(2026-09-15, Cowork 回答 260915): 仰角スイープの空白区間を埋める。
+# 7月版は 5,000 の次が 10,000mm で、8台全体の高さ std 1.16〜2.81m に測定点が無かった。
+# 既存 CSV に足さず別 CSV とし、基準の 1.5/5/10m も同一実行に含める(再実行で個別試行値が変わるため)。
+# 5,000mm 超は実現可能域(〜2,900mm)の外で、低下の開始点を特定するための参考条件。
+HEIGHT_GAP_SWEEP = [1500.0, 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0]
+
+# E2c 外挿検証: 「高さ std の総量だけで決まる」法則は std≤1.15m でしか確かめていない。
+# H5 は未知4台を {5000,5000,5000,400} に置き、8台全体 std=1.78m の複数台分散点を作る
+# (実現可能域の外・運用案ではない)。同一実行の基準として H0 を含める。
+HEIGHT_PATTERNS_EXTRAP = [
+    ("H0", {"levels": [1500.0]}),
+    ("H5", {"levels": [5000.0, 5000.0, 5000.0, 400.0]}),
+]
+
 # --- 破綻領域マップ専用スイープ(追補①) ---
 # 剛性破綻(rigidity_ok=False): N_a を絞り R_max を 23,000mm 側へ下げると欠測が
 # 増え自由アンカーの剛性が割れる。N_a=4 は既知4台と一致し自由アンカー0=退化のため
@@ -137,6 +151,24 @@ def e2_height_diversity(base_cfg):
     return ofat(_sweep_base(base_cfg), "known", "known_z_mm", known_z_lists)
 
 
+def e2_height_gap(base_cfg):
+    """追補⑤: 仰角スイープの空白区間(8台全体 std 1.16〜2.81m)を埋める単一台昇降。"""
+    known_z_lists = [[1500.0, 1500.0, 1500.0, z] for z in HEIGHT_GAP_SWEEP]
+    return ofat(_sweep_base(base_cfg), "known", "known_z_mm", known_z_lists)
+
+
+def _height_pattern_conditions(base_cfg, patterns):
+    """高さパターン列を1条件ずつ展開。condition_id は 0..len(patterns)-1。"""
+    conditions: list[tuple[dict, int]] = []
+    for cid, (label, spec) in enumerate(patterns):
+        cfg = deep_merge(
+            dict(base_cfg),
+            {"deployment": {"height_pattern": label, "unknown_z_spec": spec}},
+        )
+        conditions.append((cfg, cid))
+    return conditions
+
+
 def e2c_height_patterns(base_cfg):
     """E2c: 未知アンカーの高さ分散パターン H0〜H4 を1条件ずつ展開(依頼 E2c)。
 
@@ -144,14 +176,15 @@ def e2c_height_patterns(base_cfg):
     (_sweep_base を通さない)。各パターンは height_pattern ラベルと unknown_z_spec を
     deployment に注入する。condition_id は 0..len(HEIGHT_PATTERNS)-1。
     """
-    conditions: list[tuple[dict, int]] = []
-    for cid, (label, spec) in enumerate(HEIGHT_PATTERNS):
-        cfg = deep_merge(
-            dict(base_cfg),
-            {"deployment": {"height_pattern": label, "unknown_z_spec": spec}},
-        )
-        conditions.append((cfg, cid))
-    return conditions
+    return _height_pattern_conditions(base_cfg, HEIGHT_PATTERNS)
+
+
+def e2c_extrap(base_cfg):
+    """E2c 外挿検証: H5(std 1.78m)が単一台昇降の曲線に乗るか(参考条件, 追補⑤)。
+
+    E2c と揃えてタグ測位は ON。condition_id は H0=0, H5=1。
+    """
+    return _height_pattern_conditions(base_cfg, HEIGHT_PATTERNS_EXTRAP)
 
 
 # --- E2 破綻領域マップ(2軸グリッド, 追補①: 2種の破綻を区別) ---
@@ -194,6 +227,8 @@ EXPERIMENTS: dict[str, Callable[[Mapping[str, Any]], list[tuple[dict, int]]]] = 
     "E2_grid": e2_grid_precision,        # 精度破綻(coverage)
     "E2_grid_rigidity": e2_grid_rigidity,  # 剛性破綻(rigidity_ok)
     "E2c": e2c_height_patterns,          # 未知アンカー高さ分散パターン(H0〜H4)
+    "E2_height_gap": e2_height_gap,      # 追補⑤: 仰角スイープの空白区間
+    "E2c_extrap": e2c_extrap,            # 追補⑤: H5 による総量則の外挿検証(参考条件)
 }
 
 
