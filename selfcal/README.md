@@ -18,7 +18,7 @@ cd selfcal
 .venv/bin/python -m pytest tests/ -q
 # E1 ベースケース(CSV 出力)
 .venv/bin/python scripts/run_experiment.py --exp E1 --out results/e1_base.csv
-# E2 感度スイープ(EXPERIMENTS: E2_sigma_r/_v/_deploy/_n_anchors/_r_max/_height_diversity/_grid/_grid_rigidity)
+# E2 感度スイープ(EXPERIMENTS: E2_sigma_r/_v/_deploy/_n_anchors/_r_max/_height_diversity/_height_gap/_grid/_grid_rigidity)
 .venv/bin/python scripts/run_experiment.py --exp E2_sigma_r --out results/e2_sigma_r.csv
 # 破綻領域マップ2種(追補①): 精度破綻(σ_deploy×σ_r, タグ測位ON) と 剛性破綻(N_a×R_max, タグ測位OFF)
 .venv/bin/python scripts/run_experiment.py --exp E2_grid          --out results/e2_grid.csv --n-mc 40
@@ -27,6 +27,12 @@ cd selfcal
 .venv/bin/python scripts/run_experiment.py --exp E2_height_diversity --out results/e2_height.csv
 # E2c 未知アンカーの高さ分散パターン H0〜H4(タグ測位 ON。既知4台の高さは §4.4 規定のまま固定)
 .venv/bin/python scripts/run_experiment.py --exp E2c --out results/e2c_patterns.csv
+# 追補⑤: 仰角スイープの空白区間(別CSV, 1.5/5/10m を同一実行の基準に含む)と H5 外挿検証(タグ測位 ON)
+.venv/bin/python scripts/run_experiment.py --exp E2_height_gap --out results/e2_height_gap.csv
+.venv/bin/python scripts/run_experiment.py --exp E2c_extrap    --out results/e2c_extrap.csv
+# 追補⑤の判定(基準は docstring で実行前に固定)と、高さ std 共通軸の統合図
+.venv/bin/python scripts/analyze_height_gap.py
+.venv/bin/python scripts/plot_unified_height.py --out results/e2c_unified_height.png
 # 図(スイープ軸を自動判定: 1軸→感度曲線 / 2軸→破綻領域ヒートマップ。破綻は×剛性/△精度で色分け)
 .venv/bin/python scripts/make_figures.py --csv results/e2_sigma_r.csv        --out results/e2_sigma_r.png
 .venv/bin/python scripts/make_figures.py --csv results/e2_grid.csv           --out results/e2_grid.png --metric coverage
@@ -46,7 +52,7 @@ cd selfcal
 | D | `tag_positioning.py` | 推定/真アンカーでタグ測位(同一ノイズ, ΔRMSE 分離) |
 | E | `metrics.py`, `alignment.py` | RMSE(H/V分解), Procrustes整列, PDOP過信度, カバレッジ |
 
-## 現状(Phase B + 追補 完了 / Phase C: 一意性検査・E3・E2c 完了)
+## 現状(Phase B + 追補①〜⑤ 完了 / Phase C: 一意性検査・E3・E2c 完了)
 - **E0 全緑**: V-1〜V-9(V-9 多スタート一意性を追加, `pytest` 11 passed)。
 - **E2 感度スイープ実装済**: OFAT(σ_r/σ_v/σ_deploy/N_a/R_max/high_diversity)＋破綻領域マップ2種
   (精度破綻=σ_deploy×σ_r タグ測位ON / 剛性破綻=N_a×R_max タグ測位OFF)。`make_figures.py` が
@@ -58,6 +64,7 @@ cd selfcal
   **1500→5000mm では鉛直 shape RMSE は 1168→1061mm(≈9%減)にとどまる**。大幅改善(10000mm
   で564mm, 40000mm で134mm)は実現性の弱いタワー級高さでのみ生じる。⇒「単一アンカーを上げる」
   だけでは実用域で不足。旧「40mで8倍改善」は理論上限であり主張を要修正。
+  (5000mm の値は乱数列が別の独立な実行で 964mm。所見7参照)
 - **所見3(追補②誤差伝搬)**: E1 でタグ側 RMSE_tag 鉛直=3078mm(水平=138mm)。真アンカー版
   (5990mm)より小さく **ΔRMSE_tag_v が負** = 近共面は VDOP≈9〜12 が測距ノイズを増幅し幾何自体が
   破綻(校正誤差の加算では説明できない)。高さ多様40mでは VDOP≈2, ΔRMSE_tag_v≈+3mm と正常化。
@@ -70,11 +77,27 @@ cd selfcal
 - **所見6(E2c: 主張後段の棄却)**: 未知アンカー4台の意図高さを H0〜H4 で振っても、鉛直 shape RMSE は
   1128→1006mm(最良 H4)にとどまり **H0 との差は統計的に有意でない**(Mann-Whitney p=0.057〜0.913、
   中央値差のブートストラップ95%CI が 0 を跨ぐ)。タグ C(200mm) も 4.0→4.3% で不変。
-  **効くのは「高さ分散の総量(全アンカー z の std)」だけで、1台を高くするか複数台に散らすかは無関係**
-  (E2c の点が追補③の曲線に乗る)。改善は std ≳1800mm から始まり、実現可能域(高さ ≤5m, std ≤約1200mm)
-  では構造的にプラトーを抜けられない。⇒ 「複数台高さ分散で確保する」という主張は成立しない。
+  ⇒ 「複数台高さ分散で確保する」という主張は成立しない。
+  旧記述の「効くのは高さ分散の総量だけ(E2c の点が追補③の曲線に乗る)」は所見7で棄却した。
+  旧記述の「改善は std ≳1800mm から」は図に手で書いた数字が本文に流れたもので根拠がなく、削除した。
   副次的発見: 近共面ではタグ測位が数%の試行で発散する(tag_v 最大 2.4e8 mm, 校正自体は収束・剛性OK)
   ため、**評価は平均でなく中央値で行う**こと。
+- **所見7(追補⑤: 空白区間の追試と総量則の外挿検証, 2026-09-15)**: 実現可能域は 400〜2,900mm に確定
+  (5,000mm は参考条件)。この範囲での8台全体の高さ std の上限は 0.987m。判定基準は実行前に固定した
+  (`scripts/analyze_height_gap.py` の docstring, commit 078d806)。
+  - 単一台昇降(`E2_height_gap`): 1.5m 比で Holm 補正後に有意に下がる最初の水準は **5,000mm(std 1.16m)**
+    で、検定した最低水準で既に有意(1156→964mm)。7月版の 2.0〜4.5m(1.5m 比 −5〜−13%)と合わせ、
+    横ばいから急落するのではなく緩やかに下がると読む。10,000mm でも 648mm。
+    同じ 5m でも7月版は 1061mm。条件番号が違うと乱数列が別(独立標本)になり、100試行の中央値は ±100mm 程度揺れる。
+  - H5(未知4台={5000,5000,5000,400}, std 1.78m)は 1035mm で、単一台 7m(std 1.82m)の 804mm から
+    外れる(差 +231mm, 95%CI [131,338])。同一実行の H0(1128mm)とも有意差なし(p=0.145)。
+    ⇒ **「同じ std なら1台を上げても複数台に散らしても同じ」は成り立たない**。std≤1.15m で重なって
+    見えたのは、どちらも横ばいの区間だったため。
+  - 探索的所見(事後に選んだ軸・未検証): H5 は傾いた平面に近く、最良近似平面からの厚み(RMS)は 0.86m と
+    z std の約半分。厚みで比べると単一台 4.5〜5m と整合する。ただし既知/未知どちらを上げたかとも交絡している。
+  - 実現可能域での結論(単一昇降・台数増・複数台分散のいずれでも実用水準に届かない)は維持。
+  - 同一環境の再実行で compute_time_s 以外の全列が一致。`provenance.py` の dirty 判定が出力 CSV 自身を
+    拾い常に True になっていた不具合を修正(出力先ディレクトリ配下を除外)。
 ### Phase C(一意性検査・E3・E2c 完了)
 - **多スタート一意性検査(`uniqueness.py`, V-9)**: 剛性ランクは局所一意性の必要条件だが鏡映等の
   離散不定性(大域一意性)は捕捉できない(§4.4 注意1)。複数初期値から自己校正し低残差解を
@@ -89,5 +112,6 @@ cd selfcal
   で振る。既知4台は §4.4 規定固定。結果は所見6(主張後段の棄却)。σ_deploy=300mm(config既定)と
   1,000mm(仕様書 §5 の E1 公称)の両系列で実行し全指標が一致 = σ_deploy 非依存を再確認。
 - 残: E3 の多条件スイープ化、一意性検査の MC 組込み、TBD-3 Nüchter 数値照合、
+  「平面からの厚み」仮説と「既知/未知どちらを上げたか」仮説の切り分け(**未検証**)、
   「std/D 比(D=配置スパン)が支配」仮説の検証(area_mm スイープ, **未検証**)。
   推定器比較・PF 追加は T-008 決着(PF不採用・最小二乗固定)によりクローズ。
