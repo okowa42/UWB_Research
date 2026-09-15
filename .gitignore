@@ -7,3 +7,5 @@ env/
 selfcal/results/*.png
 # 端末ごとの Claude Code 許可設定。個人環境に依存するため管理しない。(2026-09-15)
 .claude/settings.local.json
+# VSCode のインタープリタ等、端末固有パスを含むため管理しない。(2026-09-15)
+.vscode/settings.json
