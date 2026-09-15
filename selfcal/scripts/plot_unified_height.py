@@ -121,6 +121,8 @@ def main(argv: list[str] | None = None) -> int:
         pts = [p for p in condition_points(path, exp_id) if keep is None or p[0] in keep]
         for label, s, v in pts:
             print(f"{name:>18} {label:>6} {s:13.0f} {v:10.0f}")
+        # std=0 は対数軸で -inf になり、左端からの水平線として誤って描かれるため除く。
+        pts = [p for p in pts if p[1] > 0]
         ax.plot([p[1] for p in pts], [p[2] for p in pts], marker="s" if color == ORANGE else "o",
                 linestyle=ls, color=color, markerfacecolor=color if filled else "white",
                 label=legend, markersize=7, alpha=0.85)

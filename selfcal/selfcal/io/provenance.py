@@ -40,19 +40,35 @@ def _git(args: list[str], cwd: pathlib.Path) -> str | None:
     return out.stdout.rstrip("\n")
 
 
-def git_info(repo: pathlib.Path) -> dict[str, Any]:
-    """HEAD の commit / branch と working tree の dirty 状態を集める。"""
+def git_info(repo: pathlib.Path, output_dir: pathlib.Path | None = None) -> dict[str, Any]:
+    """HEAD の commit / branch と working tree の dirty 状態を集める。
+
+    output_dir(CSV の出力先)配下の変更は dirty に数えない。meta は CSV を書いた後に
+    作るため、数えると出力 CSV 自身(と並行実行の出力)で常に dirty=True になっていた
+    (2026-09-15 判明)。dirty はコード・config の未コミット変更だけを表す。
+    """
     commit = _git(["rev-parse", "HEAD"], repo)
     if commit is None:
         return {"available": False}
     status = _git(["status", "--porcelain"], repo)
+    files = [ln[3:] for ln in status.splitlines()] if status else []
+    ignored_prefix = None
+    if output_dir is not None:
+        try:
+            rel = pathlib.Path(output_dir).resolve().relative_to(pathlib.Path(repo).resolve())
+            ignored_prefix = rel.as_posix().rstrip("/") + "/"
+        except ValueError:   # リポジトリ外への出力
+            pass
+    if ignored_prefix:
+        files = [f for f in files if not f.startswith(ignored_prefix)]
     return {
         "available": True,
         "commit": commit,
         "branch": _git(["rev-parse", "--abbrev-ref", "HEAD"], repo),
         # dirty=True の結果は再現不能。論文に使う数値は必ず False で取り直すこと。
-        "dirty": bool(status),
-        "dirty_files": [ln[3:] for ln in status.splitlines()] if status else [],
+        "dirty": bool(files),
+        "dirty_files": files,
+        "dirty_ignores": ignored_prefix,
     }
 
 
@@ -113,7 +129,7 @@ def build_meta(
         "generated_at": datetime.datetime.now().astimezone().isoformat(),
         "seed": cfg.get("montecarlo", {}).get("seed"),
         "n_mc": cfg.get("montecarlo", {}).get("n_mc"),
-        "git": git_info(repo),
+        "git": git_info(repo, output_dir=csv_path.parent),
         "env": env_info(),
         "config": cfg,
     }
