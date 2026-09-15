@@ -28,8 +28,9 @@
   - 依存は `selfcal/requirements.txt` にピン。再構築は
     `python -m venv C:\Users\ahiro\.venvs\uwb` → `pip install -r selfcal/requirements.txt`
   - Windows の **system Python には numpy が入っていない**。必ず上記 venv を使う。
-- **WSL はこのプロジェクトでは使わない**。旧クローンは 2026-09-14 に整理済み
-  （Ubuntu-20.04 は削除、Ubuntu-22.04 の `~/UWB_Research` は結果回収後に残置）。
+- **WSL はこのプロジェクトでは使わない**。旧クローンは全て削除済み（ディストリ自体は残存）
+  （Ubuntu-20.04 内は 2026-09-14、Ubuntu-22.04 の `~/UWB_Research` は 2026-09-15。削除前に中身が
+  正本と研究フォルダ `selfcal_figs/` に全て残っていることを確認済み）。
 - **AkariVault** (`C:\Users\ahiro\AkariVault`) は OneDrive 配下ではない。ネイティブ書き込み可。
 
 ## 実験結果の扱い（再現性）

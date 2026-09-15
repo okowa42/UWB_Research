@@ -5,3 +5,5 @@ env/
 # results/ の CSV は「再実行しても同じ値にならない実験記録」なので git 管理する。
 # PNG は CSV から再生成できるため除外。(2026-09-14)
 selfcal/results/*.png
+# 端末ごとの Claude Code 許可設定。個人環境に依存するため管理しない。(2026-09-15)
+.claude/settings.local.json
