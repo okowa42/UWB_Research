@@ -13,6 +13,7 @@ from . import deployment, ranging, tag_positioning
 from .calibration import LMEstimator
 from .metrics import trial_metrics
 from .rng import trial_generator
+from .uniqueness import multistart_uniqueness
 
 
 def _make_estimator(cfg: dict) -> LMEstimator:
@@ -23,6 +24,40 @@ def _make_estimator(cfg: dict) -> LMEstimator:
         ftol=float(cal["ftol"]),
         xtol=float(cal["xtol"]),
     )
+
+
+def _uniqueness_columns(dist, intended, calib, cfg, uq_cfg, rng) -> dict:
+    """多スタート検査を回し、行に入れる列を返す。
+
+    全収束解をクラスタリング(resid_tol=∞)したうえで、最良残差 + resid_tol 以内のクラスタ数を
+    「データで区別できない解の数」(uniq_n_distinct)とする。閾値を後から変えられるよう、
+    2番目に良いクラスタとの残差差と、通常推定(意図配置から1回)の残差と最良残差の差も残す。
+    """
+    cal = cfg["calibration"]
+    tol = float(uq_cfg["resid_tol_mm"])
+    res = multistart_uniqueness(
+        dist, intended,
+        cfg["known"]["known_idx"] if cal["gauge"] == "known" else [],
+        cal["gauge"], int(cal["dof"]), rng,
+        estimator=_make_estimator(cfg),
+        n_starts=int(uq_cfg["n_starts"]),
+        perturb_mm=float(uq_cfg["perturb_mm"]),
+        resid_tol_mm=float("inf"),
+        cluster_tol_mm=float(uq_cfg["cluster_tol_mm"]),
+    )
+    cr = list(res.cluster_residuals_mm)
+    best = res.best_residual_mm
+    n_distinct = int(sum(1 for r in cr if r <= best + tol)) if cr else 0
+    main = float(calib.info.get("rms_residual_mm", float("nan")))
+    return {
+        "uniq_n_converged": res.n_converged,
+        "uniq_n_clusters_all": len(cr),
+        "uniq_n_distinct": n_distinct,
+        "uniq_ok": float(n_distinct <= 1 and res.n_converged > 0),
+        "uniq_best_resid_mm": best,
+        "uniq_second_gap_mm": (cr[1] - cr[0]) if len(cr) > 1 else float("nan"),
+        "uniq_main_gap_mm": main - best,
+    }
 
 
 def run_single_trial(
@@ -67,6 +102,14 @@ def run_single_trial(
     row = trial_metrics(
         dep.true_xyz_mm, calib.anchor_positions_mm, calib, tag_res, cfg
     )
+
+    # 任意: 多スタート大域一意性検査(E6)。乱数を消費するので、他の全乱数を引いた後に行う
+    # (配置・測距・タグの乱数列は検査の有無で変わらない)。
+    uq_cfg = cfg["montecarlo"].get("uniqueness_check")
+    if uq_cfg:
+        row.update(_uniqueness_columns(dist, dep.intended_xyz_mm, calib, cfg, uq_cfg, rng))
+    # 任意: 実験側が付ける定数ラベル(E6 の系列名・z_high など)。
+    row.update(cfg["montecarlo"].get("record_labels") or {})
     row["condition_id"] = condition_id
     row["trial_id"] = trial_id
     row["rng_condition_id"] = rng_cid

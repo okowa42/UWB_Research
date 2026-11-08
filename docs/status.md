@@ -11,6 +11,12 @@ phase: 案B Phase C: E4・E5 完了・タグ側記述を訂正 → アンカー�
 # 実装状態(Cowork連携用)
 
 ## 現在の状態
+### 【進行中】E6 高所アンカー1台とタグ合格率（依頼 `ClaudeCode実装依頼_高所アンカーとタグ合格率_261108.md`）
+- **工数見込み: 本日 11/08 中に完了見込み**（1,000 試行・一意性検査込みで計算 20〜40 分程度。11/10 期限に余裕あり）。
+- 判定基準・事前予測（依頼書 §3 ＋ Claude Code の線形化予測）は `selfcal/scripts/analyze_e6.py` の docstring に、スモーク実行より前の commit で固定。
+- §5 回答の要点: K は既知 known_idx[3]（(+50 m,0)、E2_height と同じ台）。U は K と水平位置を揃えるため未知 index 7（(−50 m,0)、辺の中点）を上げる。
+  一意性検査は E6 用に MC ループへ組み込み（12 初期値、残差差 10mm 以内の別解を数える）。
+
 ### 【新】E4・E5 結果（2026-11-08。判定基準の事前 commit 369cb2a、実行も同 commit・dirty=false）
 詳細: `selfcal_figs/E4E5結果_配置範囲と許容誤差_261108.md`（11/08 訂正版。Cowork 回答 `Cowork回答_E4E5判断_261108.md` §2 を反映）。数値の出どころ: `results/e4_area.csv`・`e4_area_tagz1000.csv`・
 `e5_e2c_rerun.csv`（各 meta 付き）、判定値 `e4_area_summary.json`、E5 全表 `e5_coverage.csv`。

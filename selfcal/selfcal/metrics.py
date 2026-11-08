@@ -106,6 +106,11 @@ def trial_metrics(
             out["coverage"] = float(np.mean(err <= eps))
             out["coverage_100mm"] = float(np.mean(err <= 100.0))
             out["coverage_500mm"] = float(np.mean(err <= 500.0))   # E5(2026-11-08)
+            # 真アンカー版(同一ノイズ)の C(ε)。自己校正の誤差を除いた到達上限(E6, 2026-11-08)。
+            err_t = np.linalg.norm(t - g, axis=1)
+            out["coverage_trueanchor_100mm"] = float(np.mean(err_t <= 100.0))
+            out["coverage_trueanchor"] = float(np.mean(err_t <= eps))
+            out["coverage_trueanchor_500mm"] = float(np.mean(err_t <= 500.0))
             # PDOP true/est(中央値)と過信度
             p_true, h_true, v_true = _median_pdop(true_xyz_mm, grid, positionable, r_max)
             p_est, h_est, v_est = _median_pdop(est_xyz_mm, grid, positionable, r_max)
@@ -120,6 +125,8 @@ def trial_metrics(
             for key in ["rmse_tag_mm", "rmse_tag_h_mm", "rmse_tag_v_mm",
                         "rmse_tag_trueanchor_mm", "delta_rmse_tag_mm",
                         "coverage", "coverage_100mm", "coverage_500mm",
+                        "coverage_trueanchor_100mm", "coverage_trueanchor",
+                        "coverage_trueanchor_500mm",
                         "pdop_true", "pdop_est", "vdop_true", "vdop_est",
                         "pdop_overconfidence"]:
                 out[key] = float("nan")

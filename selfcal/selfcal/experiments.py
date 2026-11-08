@@ -75,6 +75,18 @@ E4_RNG_CONDITION_ID = 0
 # タグの乱数より前に決まるので両者で同一になる。
 TAG_Z_SPEC_MM = [0.0, 1000.0]
 
+# E6(2026-11-08 依頼「高所アンカーとタグ合格率」): 高所アンカー1台の高さ z_high を振る。
+# 2系列: K = 既知アンカー1台(known_idx[3], 座標 (+L/2, 0)。E2_height と同じ台)を上げる。
+#        U = 未知アンカー1台を上げる。K と水平位置の条件を揃えるため、K と y 軸対称な辺の中点
+#            index 7 (−L/2, 0) を選ぶ(先頭の未知 index 4 は角 (+L/2,+L/2) で水平位置が交絡する)。
+#            他は E4/E2c H0 と同じ(既知 1500×3+2900、残りの未知3台 1500)。
+# 共通乱数(rng_condition_id=0)で全10条件の試行 i の乱数列を同一にする。U1500 は E2c H0 と同一条件。
+HIGH_Z_SWEEP = [1500.0, 5000.0, 10000.0, 20000.0, 40000.0]
+E6_U_HIGH_INDEX = 7
+# 多スタート一意性検査(§5 確認事項3)。resid_tol_mm=10 は σ_r=100mm・28 辺・rms 残差 ≈70mm のとき
+# Δχ² ≈ 4(残差二乗和の差で 2σ 相当)に当たる。これより残差の差が小さい別解は「データで区別できない」とみなす。
+E6_UNIQUENESS = {"n_starts": 12, "perturb_mm": 500.0, "resid_tol_mm": 10.0, "cluster_tol_mm": 10.0}
+
 # --- 破綻領域マップ専用スイープ(追補①) ---
 # 剛性破綻(rigidity_ok=False): N_a を絞り R_max を 23,000mm 側へ下げると欠測が
 # 増え自由アンカーの剛性が割れる。N_a=4 は既知4台と一致し自由アンカー0=退化のため
@@ -243,6 +255,42 @@ def e5_e2c_rerun(base_cfg):
     return _height_pattern_conditions(base_cfg, HEIGHT_PATTERNS[:4])
 
 
+def e6_high_anchor(base_cfg):
+    """E6: 高所アンカー1台(K: 既知 / U: 未知)の高さを振り、タグ C(ε) を記録する。
+
+    condition_id は K の5水準(0..4)→ U の5水準(5..9)。タグ測位 ON、一意性検査 ON。
+    """
+    known_idx = list(base_cfg["known"]["known_idx"])
+    n = int(base_cfg["deployment"]["n_anchors"])
+    unknown = [i for i in range(n) if i not in set(known_idx)]
+    u_pos = unknown.index(E6_U_HIGH_INDEX)   # levels は未知アンカーへ index 順に巡回割当
+    conditions: list[tuple[dict, int]] = []
+    cid = 0
+    for series in ("K", "U"):
+        for z in HIGH_Z_SWEEP:
+            label = f"{series}{int(z)}"
+            mc = {
+                "rng_condition_id": E4_RNG_CONDITION_ID,
+                "uniqueness_check": dict(E6_UNIQUENESS),
+                "record_labels": {"e6_series": series, "z_high_mm": z},
+            }
+            if series == "K":
+                over = {
+                    "known": {"known_z_mm": [1500.0, 1500.0, 1500.0, z]},
+                    "deployment": {"height_pattern": label},
+                }
+            else:
+                levels = [1500.0] * len(unknown)
+                levels[u_pos] = z
+                over = {"deployment": {"height_pattern": label,
+                                       "unknown_z_spec": {"levels": levels}}}
+            over["tag_positioning"] = {"enabled": True}
+            over["montecarlo"] = mc
+            conditions.append((deep_merge(dict(base_cfg), over), cid))
+            cid += 1
+    return conditions
+
+
 # --- E2 破綻領域マップ(2軸グリッド, 追補①: 2種の破綻を区別) ---
 def e2_grid_precision(base_cfg):
     """精度破綻マップ: σ_deploy × σ_r。
@@ -288,6 +336,7 @@ EXPERIMENTS: dict[str, Callable[[Mapping[str, Any]], list[tuple[dict, int]]]] = 
     "E4": e4_area,                       # 配置範囲の縮小(タグ z = config 既定)
     "E4_tagz1000": e4_area_tagz1000,     # 同上、タグ z = 仕様書公称 {0,1000}
     "E5_E2c": e5_e2c_rerun,              # E2c H0〜H3 の取り直し(評価点ごとの誤差を保存)
+    "E6": e6_high_anchor,                # 高所アンカー1台(K/U)とタグ合格率
 }
 
 
