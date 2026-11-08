@@ -213,10 +213,9 @@ def test_v9a_tripod_flip_detected_despite_full_rank():
     assert res.max_cluster_shape_dist_mm > 100.0  # 反転は明確に分離
 
 
-def test_v9b_noncoplanar_known_is_unique():
-    # 既知アンカーが非共面(E1: 1台のみ z=2900)なら鏡映は既知点で破れ、単一解に収束する。
+def _v9_noiseless_case(known_idx, known_z):
     cfg = load_config(overrides={
-        "known": {"known_z_mm": [1500.0, 1500.0, 1500.0, 2900.0]},
+        "known": {"known_idx": known_idx, "known_z_mm": known_z},
         "deployment": {"sigma_v_mm": 300.0},
         "ranging": {"sigma_r_mm": 0.0},
     })
@@ -227,5 +226,29 @@ def test_v9b_noncoplanar_known_is_unique():
         dist, dep.intended_xyz_mm, cfg["known"]["known_idx"], "known", 3, rng,
         n_starts=16, perturb_mm=800.0, resid_tol_mm=1e-2,
     )
+    return dep, res
+
+
+def test_v9b_coplanar_g1_mirror_detected():
+    # 現在の G1 配置(既定 config): 既知 0・1・2 は下辺 y=−50,000mm に一直線、既知3 は (+50,000, 0)mm。
+    # 3点が一直線なので、既知3 を 2,900mm に上げても4台は常に共面で、その傾いた平面に関する
+    # 鏡映解が残る。検査はこれを検出できなければならない(2026-11-08 訂正。以前のこのテストは
+    # 「既知非共面なら1解」としていたが、鏡映の種を水平面について作っていたため探索が届かず、
+    # 見かけ上合格していた)。
+    dep, res = _v9_noiseless_case([0, 1, 2, 3], [1500.0, 1500.0, 1500.0, 2900.0])
+    known_xyz = dep.intended_xyz_mm[[0, 1, 2, 3]]
+    assert np.linalg.matrix_rank(known_xyz[1:] - known_xyz[0], tol=1e-6) == 2  # 既知4台は共面
+    assert not res.uniqueness_ok
+    assert res.n_distinct == 2                    # 本物の解とその鏡映
+    assert res.best_residual_mm < 1e-2            # 両解ともデータに完全適合
+    assert res.max_cluster_shape_dist_mm > 100.0  # 鏡映は明確に分離
+
+
+def test_v9c_noncoplanar_known_is_unique():
+    # 陽性対照: 一直線に並ばない3台(角 0・2・4)を 1,500mm、既知3 を 2,900mm にすると4台は非共面で、
+    # 鏡映は既知点で破れ、単一解に収束する(検査が何でも「別解あり」と言うわけではないことの確認)。
+    dep, res = _v9_noiseless_case([0, 2, 4, 3], [1500.0, 1500.0, 1500.0, 2900.0])
+    known_xyz = dep.intended_xyz_mm[[0, 2, 4, 3]]
+    assert np.linalg.matrix_rank(known_xyz[1:] - known_xyz[0], tol=1e-6) == 3  # 非共面
     assert res.uniqueness_ok
     assert res.n_distinct == 1
