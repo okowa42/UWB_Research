@@ -23,6 +23,8 @@ def _ordered_fields(rows: Sequence[Mapping]) -> list[str]:
     seen: list[str] = []
     for row in rows:
         for key in row:
+            if key.startswith("_"):   # 配列などの非スカラー補助列は CSV に書かない
+                continue
             if key not in seen:
                 seen.append(key)
     head = [k for k in preferred if k in seen]

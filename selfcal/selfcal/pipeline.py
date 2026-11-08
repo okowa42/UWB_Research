@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import time
 
+import numpy as np
+
 from . import deployment, ranging, tag_positioning
 from .calibration import LMEstimator
 from .metrics import trial_metrics
@@ -28,7 +30,11 @@ def run_single_trial(
 ) -> dict:
     """1試行を実行し、指標 dict(long-format CSV の1行素材)を返す。"""
     root_seed = int(cfg["montecarlo"]["seed"])
-    rng = trial_generator(root_seed, condition_id, trial_id)
+    # 共通乱数(E4): montecarlo.rng_condition_id があれば、乱数列を条件番号ではなく
+    # その値と試行番号だけから決める。無ければ従来どおり条件番号を使う(既存実験は不変)。
+    rng_cid = cfg["montecarlo"].get("rng_condition_id")
+    rng_cid = condition_id if rng_cid is None else int(rng_cid)
+    rng = trial_generator(root_seed, rng_cid, trial_id)
 
     t0 = time.perf_counter()
 
@@ -63,6 +69,13 @@ def run_single_trial(
     )
     row["condition_id"] = condition_id
     row["trial_id"] = trial_id
+    row["rng_condition_id"] = rng_cid
+    row["area_mm"] = float(cfg["deployment"]["area_mm"])
+    # 評価点ごとのタグ 3D 誤差(推定アンカー版/真アンカー版, 測位不能は NaN)。
+    # 先頭 "_" の列は CSV に書かず、run_experiment.py --save-point-err が npz に保存する。
+    if tag_res is not None:
+        row["_tag_err_mm"] = np.linalg.norm(tag_res.est_pos_mm - tag_res.grid_mm, axis=1)
+        row["_tag_err_true_mm"] = np.linalg.norm(tag_res.truth_pos_mm - tag_res.grid_mm, axis=1)
     row["compute_time_s"] = time.perf_counter() - t0
     row["n_anchors"] = cfg["deployment"]["n_anchors"]
     row["sigma_r_mm"] = cfg["ranging"]["sigma_r_mm"]

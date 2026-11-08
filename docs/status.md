@@ -5,12 +5,15 @@
 - Cowork(Windows側AI)が読むファイル。実装を知らない読者にも状態が伝わる書き方をする
 -->
 ---
-last_updated: 2026-09-15
-phase: 案B Phase C: 追補⑤（空白区間の追試・H5外挿検証）完了 → 統合則を棄却 / 実現可能域 400〜2,900mm 確定 / E0全緑11
+last_updated: 2026-11-08
+phase: 案B Phase C: E4（配置範囲の縮小）・E5（許容誤差の感度）実行中（判定基準は事前 commit 済み）
 ---
 # 実装状態(Cowork連携用)
 
 ## 現在の状態
+### 【進行中】E4・E5（依頼 `ClaudeCode実装依頼_配置範囲と許容誤差_261108.md`）
+- **工数見込み: 本日 11/08 中に完了見込み**（計算は1実験あたり約3分×3実験。11/10 期限に余裕あり）。
+- 判定基準・事前予測は `selfcal/scripts/analyze_area.py` の docstring に、実行前の commit で固定した。
 - 案B（月面UWB自己校正）: **Phase A・B・追補①〜⑤・Phase C（一意性検査・E3・E2c）まで完了**。`selfcal/` パッケージ。
 - **E0 受け入れテスト 全緑**（`pytest tests/` = 11 passed, V-1〜V-9）。
 - 実験結果の CSV は git 管理下。各 CSV に `<csv名>.meta.json`（commit・環境・config・CSVハッシュ）が付く。

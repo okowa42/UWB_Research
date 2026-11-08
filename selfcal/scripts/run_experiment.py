@@ -14,6 +14,8 @@ import pathlib
 import statistics
 import sys
 
+import numpy as np
+
 _HERE = pathlib.Path(__file__).resolve().parent          # <repo>/selfcal/scripts
 _PROJ = _HERE.parent                                      # <repo>/selfcal
 _ROOT = _PROJ.parent                                      # <repo>
@@ -24,7 +26,7 @@ for _p in (str(_PROJ), str(_ROOT)):
 from selfcal.experiments import build_conditions          # noqa: E402
 from selfcal.io.config_loader import load_config           # noqa: E402
 from selfcal.io.exporters import write_long_csv            # noqa: E402
-from selfcal.io.provenance import write_meta               # noqa: E402
+from selfcal.io.provenance import sha256_file, write_meta  # noqa: E402
 from selfcal.montecarlo import run_condition               # noqa: E402
 
 
@@ -34,6 +36,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--config", default=None, help="config yaml パス")
     ap.add_argument("--out", default=None, help="出力 CSV パス")
     ap.add_argument("--n-mc", type=int, default=None, help="試行数の上書き")
+    ap.add_argument(
+        "--save-point-err", action="store_true",
+        help="評価点ごとのタグ 3D 誤差を <csv名>.point_err.npz に保存(E5 の定義(a)・C(ε) 再計算用)",
+    )
     args = ap.parse_args(argv)
 
     overrides = {}
@@ -57,12 +63,31 @@ def main(argv: list[str] | None = None) -> int:
             f"max={max(times) * 1e3:.1f}ms"
         )
 
+    # 評価点ごとの誤差(配列)は行から外し、要求時のみ npz に保存する。
+    err = [r.pop("_tag_err_mm", None) for r in all_rows]
+    err_true = [r.pop("_tag_err_true_mm", None) for r in all_rows]
+
     out = args.out or f"results/{args.exp.lower()}.csv"
     path = write_long_csv(all_rows, out)
     print(f"wrote {len(all_rows)} rows -> {path}")
 
+    extra = None
+    if args.save_point_err:
+        if any(e is None for e in err):
+            raise SystemExit("--save-point-err: タグ測位 OFF の行があり評価点誤差が無い")
+        npz_path = path.with_suffix(path.suffix + ".point_err.npz")
+        np.savez_compressed(
+            npz_path,
+            condition_id=np.array([r["condition_id"] for r in all_rows]),
+            trial_id=np.array([r["trial_id"] for r in all_rows]),
+            tag_err_mm=np.vstack(err),
+            tag_err_true_mm=np.vstack(err_true),
+        )
+        extra = {"point_err_npz": npz_path.name, "point_err_sha256": sha256_file(npz_path)}
+        print(f"wrote point errors -> {npz_path}")
+
     # 出自メタ(commit + 環境)を必ず添える。seed だけでは再現できないため。
-    meta_path = write_meta(path, args.exp, base_cfg, len(all_rows))
+    meta_path = write_meta(path, args.exp, base_cfg, len(all_rows), extra=extra)
     print(f"wrote provenance -> {meta_path}")
     return 0
 

@@ -61,6 +61,20 @@ HEIGHT_PATTERNS_EXTRAP = [
     ("H5", {"levels": [5000.0, 5000.0, 5000.0, 400.0]}),
 ]
 
+# E4(2026-11-08 依頼 261108): 配置範囲 L_site の縮小。水平は相似縮小(アンカー perimeter と
+# タググリッドを L に比例)、鉛直は固定(既知 1500×3+2900, 未知 1500 = E2c H0 相当)。
+# σ_deploy は L に比例させない。100,000mm は同一実行の基準。
+AREA_SWEEP = [100000.0, 50000.0, 25000.0, 12500.0]
+# タグ格子間隔 = L/20(100,000mm で既定 5,000mm = 21×21×2 = 882 点を全水準で維持)。
+TAG_GRID_DIVISIONS = 20
+# 共通乱数: E4 の全水準で試行 i の乱数列を同一にする(対応のある比較)。
+# 条件番号 0 の乱数列を使うので、L=100,000mm は E2c H0(条件番号0)と同じ乱数列になる。
+E4_RNG_CONDITION_ID = 0
+# タグ高さ: config 既定は {0, 2000}(E2c・中間発表の数値はこちら)だが、仕様書 §4.5 の公称は
+# {0, 1000}。食い違いが判明したため(2026-11-08)両方を実行する。アンカー側の結果は
+# タグの乱数より前に決まるので両者で同一になる。
+TAG_Z_SPEC_MM = [0.0, 1000.0]
+
 # --- 破綻領域マップ専用スイープ(追補①) ---
 # 剛性破綻(rigidity_ok=False): N_a を絞り R_max を 23,000mm 側へ下げると欠測が
 # 増え自由アンカーの剛性が割れる。N_a=4 は既知4台と一致し自由アンカー0=退化のため
@@ -187,6 +201,48 @@ def e2c_extrap(base_cfg):
     return _height_pattern_conditions(base_cfg, HEIGHT_PATTERNS_EXTRAP)
 
 
+def _area_conditions(base_cfg, tag_z_mm=None):
+    """E4: L_site を AREA_SWEEP で振る。condition_id は 0..3、乱数列は全水準共通。"""
+    conditions: list[tuple[dict, int]] = []
+    for cid, L in enumerate(AREA_SWEEP):
+        tp = {
+            "enabled": True,
+            "grid_span_mm": L,
+            "grid_step_mm": L / TAG_GRID_DIVISIONS,
+        }
+        if tag_z_mm is not None:
+            tp["grid_z_mm"] = list(tag_z_mm)
+        cfg = deep_merge(
+            dict(base_cfg),
+            {
+                "deployment": {"area_mm": L},
+                "tag_positioning": tp,
+                # pipeline が読む任意キー(既定 config には置かない)。
+                "montecarlo": {"rng_condition_id": E4_RNG_CONDITION_ID},
+            },
+        )
+        conditions.append((cfg, cid))
+    return conditions
+
+
+def e4_area(base_cfg):
+    """E4: 配置範囲の縮小(タグ高さは config 既定 = E2c と同条件)。"""
+    return _area_conditions(base_cfg)
+
+
+def e4_area_tagz1000(base_cfg):
+    """E4: 同上、タグ高さだけ仕様書 §4.5 公称 {0, 1000}mm。"""
+    return _area_conditions(base_cfg, TAG_Z_SPEC_MM)
+
+
+def e5_e2c_rerun(base_cfg):
+    """E5 用: E2c H0〜H3 を同じ乱数列(条件番号 0〜3)で取り直し、評価点ごとの誤差を残す。
+
+    既存の E2c CSV には評価点ごとの誤差が無く、C(500mm) と定義(a)が出せないため。
+    """
+    return _height_pattern_conditions(base_cfg, HEIGHT_PATTERNS[:4])
+
+
 # --- E2 破綻領域マップ(2軸グリッド, 追補①: 2種の破綻を区別) ---
 def e2_grid_precision(base_cfg):
     """精度破綻マップ: σ_deploy × σ_r。
@@ -229,6 +285,9 @@ EXPERIMENTS: dict[str, Callable[[Mapping[str, Any]], list[tuple[dict, int]]]] = 
     "E2c": e2c_height_patterns,          # 未知アンカー高さ分散パターン(H0〜H4)
     "E2_height_gap": e2_height_gap,      # 追補⑤: 仰角スイープの空白区間
     "E2c_extrap": e2c_extrap,            # 追補⑤: H5 による総量則の外挿検証(参考条件)
+    "E4": e4_area,                       # 配置範囲の縮小(タグ z = config 既定)
+    "E4_tagz1000": e4_area_tagz1000,     # 同上、タグ z = 仕様書公称 {0,1000}
+    "E5_E2c": e5_e2c_rerun,              # E2c H0〜H3 の取り直し(評価点ごとの誤差を保存)
 }
 
 

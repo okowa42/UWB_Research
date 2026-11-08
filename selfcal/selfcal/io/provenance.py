@@ -116,11 +116,12 @@ def build_meta(
     cfg: dict,
     n_rows: int,
     repo: pathlib.Path | None = None,
+    extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """CSV に添えるメタデータ dict を組み立てる。"""
+    """CSV に添えるメタデータ dict を組み立てる。extra は付随ファイルの記録など。"""
     csv_path = pathlib.Path(csv_path)
     repo = repo or pathlib.Path(__file__).resolve().parents[3]
-    return {
+    meta = {
         "schema": SCHEMA_VERSION,
         "exp_id": exp_id,
         "csv": csv_path.name,
@@ -133,6 +134,9 @@ def build_meta(
         "env": env_info(),
         "config": cfg,
     }
+    if extra:
+        meta["extra"] = extra
+    return meta
 
 
 def write_meta(
@@ -141,10 +145,11 @@ def write_meta(
     cfg: dict,
     n_rows: int,
     repo: pathlib.Path | None = None,
+    extra: dict[str, Any] | None = None,
 ) -> pathlib.Path:
     """`<csv名>.meta.json` を CSV の隣に書き出し、そのパスを返す。"""
     csv_path = pathlib.Path(csv_path)
-    meta = build_meta(csv_path, exp_id, cfg, n_rows, repo=repo)
+    meta = build_meta(csv_path, exp_id, cfg, n_rows, repo=repo, extra=extra)
     out = csv_path.with_suffix(csv_path.suffix + ".meta.json")
     with open(out, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(meta, fh, ensure_ascii=False, indent=2, sort_keys=False)
