@@ -11,22 +11,21 @@
 | 設計指示 | Cowork→Code | 研究フォルダ `Claude用参考資料/` | Cowork・ユーザー | Claude Code（読取専用） |
 | コード規約 | 参照のみ | 研究フォルダ `CLAUDE.md` | ユーザー | Claude Code（読取専用） |
 
-## 重要パス（Windows ネイティブ表記・2026-09-14 更新）
+## 重要パス（Windows ネイティブ表記・2026-11-26 更新）
 ```
 リポジトリ:     C:\dev\UWB_Research
-研究フォルダ:   C:\Users\ahiro\OneDrive - Chiba Institute of Technology\デスクトップ\Claude\大学\研究\
+研究フォルダ:   C:\Users\ahiro\研究\
 設計指示置き場: 上記 + Claude用参考資料\
 ミラー先:       上記 + Claude用参考資料\ClaudeCode_status_mirror.md
 ```
-> 注意1: OneDrive フォルダ名は組織テナント由来（`OneDrive - Chiba Institute of Technology`）。
-> 個人用↔大学テナントの切替やテナント名変更で変わり得る。ミラー前に `ls` で実在を確認し、
-> 見つからなければ `C:\Users\ahiro\` 直下の `OneDrive*` を探して読み替えること
-> （2026-07-13 に `OneDrive\デスクトップ` → `OneDrive - Chiba Institute of Technology\デスクトップ` の移設実績あり）。
+> 注意1: 2026-11-26 に研究フォルダを OneDrive 配下（旧 `C:\Users\ahiro\OneDrive - Chiba Institute of Technology\デスクトップ\Claude\大学\研究\`）
+> から `C:\Users\ahiro\研究\` へ移し、GitHub（非公開リポジトリ `okowa42/Research`）で管理する形にした。
+> 理由: 卒業後に大学の OneDrive が使えなくなる見込みのため、また同期フォルダに git リポジトリを置かないため。
+> 旧フォルダは `研究_旧_261126` に改名して残す（書き込まない）。ミラー前に `ls` で新パスの実在を確認すること。
 >
 > 注意2: 2026-09-14 に WSL 運用をやめ Windows ネイティブ一本にしたため、旧 `/mnt/c/...` 表記は廃止。
 > 同時にリポジトリを OneDrive 配下から `C:\dev\UWB_Research` へ移した
-> （同期フォルダに git リポジトリを置かないための予防措置）。研究フォルダ側は OneDrive のままでよい
-> （Cowork との受け渡しに同期が必要なため）。
+> （同期フォルダに git リポジトリを置かないための予防措置）。
 
 ## セッション開始時（詳細）
 - `docs/status.md` を読む（前回の状態・次のToDo）。
@@ -36,7 +35,7 @@
 1. `docs/status.md` を更新（書式は下記「status.md 書式」）。
 2. ミラーコピーと検証:
    ```bash
-   MIRROR="/c/Users/ahiro/OneDrive - Chiba Institute of Technology/デスクトップ/Claude/大学/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
+   MIRROR="/c/Users/ahiro/研究/Claude用参考資料/ClaudeCode_status_mirror.md"
    cp docs/status.md "$MIRROR"
    cmp docs/status.md "$MIRROR"
    ```
